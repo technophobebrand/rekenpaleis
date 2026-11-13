@@ -1,0 +1,2112 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RekenPaleis - Groep 3 Rekenavontuur</title>
+    <!-- Tailwind CSS voor responsieve styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Fredoka (speels en super leesbaar voor kinderen) en Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome voor kindvriendelijke iconen -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Canvas Confetti voor feestelijke beloningsanimaties -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <style>
+        body {
+            font-family: 'Fredoka', 'Inter', sans-serif;
+            transition: background 0.5s ease;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* Thema achtergronden met subtiele patronen geïnspireerd op de referentiebeelden */
+        .theme-mymelody {
+            background-color: #FFF0F5;
+            background-image: radial-gradient(#FFB6C1 1.5px, transparent 1.5px), radial-gradient(#FFF275 1.5px, #FFF0F5 1.5px);
+            background-size: 40px 40px;
+            background-position: 0 0, 20px 20px;
+        }
+
+        .theme-cinnamoroll {
+            background-color: #EBF5FF;
+            background-image: 
+                linear-gradient(90deg, rgba(196, 226, 255, 0.5) 50%, transparent 50%),
+                linear-gradient(rgba(196, 226, 255, 0.5) 50%, transparent 50%);
+            background-size: 48px 48px;
+        }
+
+        .theme-kuromi {
+            background: radial-gradient(circle at top, #F3E8FF 0%, #D8B4FE 100%);
+        }
+
+        /* Animaties voor mascottes en knoppen */
+        @keyframes bounceGentle {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+        .animate-bounce-gentle {
+            animation: bounceGentle 2.5s infinite ease-in-out;
+        }
+
+        @keyframes popIn {
+            0% { transform: scale(0.8); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .animate-pop-in {
+            animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        /* Grote kindvriendelijke knoppen met 3D-klikgevoel */
+        .btn-kid {
+            transition: all 0.12s ease;
+            box-shadow: 0 5px 0 rgba(0, 0, 0, 0.15);
+        }
+        .btn-kid:active {
+            transform: translateY(4px);
+            box-shadow: 0 1px 0 rgba(0, 0, 0, 0.15);
+        }
+
+        /* Rekenrek kraal styling */
+        .bead {
+            transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(255,255,255,0.4);
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(0,0,0,0.2);
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body id="app-body" class="theme-mymelody min-h-screen flex flex-col overflow-x-hidden text-slate-800">
+
+    <!-- Bovenste Navigatiebalk -->
+    <header id="header-bar" class="sticky top-0 z-40 backdrop-blur-md bg-white/85 border-b border-white/60 shadow-sm px-3 sm:px-6 py-3">
+        <div class="max-w-6xl mx-auto flex flex-wrap items-center justify-between gap-2">
+            <!-- Logo & Mascotte -->
+            <div class="flex items-center gap-3 cursor-pointer" onclick="app.switchView('dagprogramma')">
+                <div id="mascot-avatar" class="w-12 h-12 rounded-2xl bg-pink-100 flex items-center justify-center text-2xl shadow-inner border-2 border-white animate-bounce-gentle">
+                    🐰🎀
+                </div>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <h1 class="text-xl sm:text-2xl font-bold tracking-tight text-slate-800">RekenPaleis</h1>
+                        <span id="theme-badge" class="text-xs px-2.5 py-0.5 rounded-full bg-pink-100 text-pink-700 font-semibold shadow-sm">My Melody</span>
+                    </div>
+                    <p class="text-xs text-slate-500 font-medium">Groep 3 • Spelend leren rekenen</p>
+                </div>
+            </div>
+
+            <!-- Beloningen Teller (Begint netjes op 0) -->
+            <div class="flex items-center gap-2 sm:gap-3 bg-white/90 px-3 py-1.5 rounded-2xl shadow-sm border border-slate-100">
+                <div class="flex items-center gap-1.5" title="Verdiende Sterren">
+                    <span class="text-xl">⭐</span>
+                    <span id="stat-stars" class="font-bold text-lg text-amber-500">0</span>
+                </div>
+                <div class="w-px h-5 bg-slate-200"></div>
+                <div class="flex items-center gap-1.5" title="Verdiende Gouden Munten">
+                    <span class="text-xl">🪙</span>
+                    <span id="stat-coins" class="font-bold text-lg text-yellow-600">0</span>
+                </div>
+                <div class="w-px h-5 bg-slate-200"></div>
+                <div class="flex items-center gap-1.5" title="Afgeronde Dagen">
+                    <span class="text-xl">🏆</span>
+                    <span id="stat-days" class="font-bold text-lg text-emerald-600">0</span>
+                </div>
+            </div>
+
+            <!-- Hoofdmenu Knoppen -->
+            <nav class="flex items-center gap-1.5 sm:gap-2 overflow-x-auto py-1">
+                <button onclick="app.switchView('dagprogramma')" id="nav-dagprogramma" class="nav-btn btn-kid px-3 py-2 rounded-xl font-bold text-sm bg-pink-500 text-white flex items-center gap-1.5">
+                    <i class="fa-solid fa-calendar-day"></i>
+                    <span>Dagprogramma</span>
+                </button>
+                <button onclick="app.switchView('sommenmaker')" id="nav-sommenmaker" class="nav-btn btn-kid px-3 py-2 rounded-xl font-bold text-sm bg-white text-slate-700 hover:bg-slate-50 flex items-center gap-1.5">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i>
+                    <span>Sommen Maker</span>
+                </button>
+                <button onclick="app.switchView('instellingen')" id="nav-instellingen" class="nav-btn btn-kid px-3 py-2 rounded-xl font-bold text-sm bg-white text-slate-700 hover:bg-slate-50 flex items-center gap-1.5">
+                    <i class="fa-solid fa-palette"></i>
+                    <span class="hidden sm:inline">Thema & Import</span>
+                </button>
+                <button onclick="app.switchView('readme')" id="nav-readme" class="nav-btn btn-kid px-3 py-2 rounded-xl font-bold text-sm bg-white text-slate-700 hover:bg-slate-50 flex items-center gap-1.5" title="Handleiding & JSON Uitleg">
+                    <i class="fa-solid fa-book-open"></i>
+                    <span class="hidden md:inline">Uitleg</span>
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Hoofdcontainer -->
+    <main class="flex-grow max-w-5xl w-full mx-auto px-3 sm:px-6 py-6">
+
+        <!-- ========================================================= -->
+        <!-- VIEW 1: DAGPROGRAMMA OVERZICHT (Kalender & Periodes)      -->
+        <!-- ========================================================= -->
+        <section id="view-dagprogramma" class="space-y-6 animate-pop-in">
+            <!-- Welkomstbanner -->
+            <div id="welcome-banner" class="relative overflow-hidden rounded-3xl p-6 sm:p-8 text-white shadow-lg bg-gradient-to-r from-pink-400 to-rose-400">
+                <div class="relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                    <div>
+                        <span class="inline-block px-3 py-1 rounded-full bg-white/25 text-xs font-bold uppercase tracking-wider mb-2">Groep 3 Jaarprogramma</span>
+                        <h2 class="text-2xl sm:text-3xl font-bold mb-1">Hoi rekenkampioen! Klaar voor vandaag?</h2>
+                        <p id="banner-subtitle" class="text-white/95 text-sm sm:text-base">Ga verder met je volgende dag of kies een eigen rekenopdracht.</p>
+                    </div>
+                    <button onclick="app.startNextAvailableDay()" class="btn-kid bg-yellow-300 hover:bg-yellow-200 text-slate-900 font-bold px-6 py-4 rounded-2xl text-lg flex items-center gap-2 shrink-0">
+                        <i class="fa-solid fa-play"></i>
+                        <span id="btn-continue-label">Start Dag 1</span>
+                    </button>
+                </div>
+                <div id="banner-bg-icon" class="absolute -right-4 -bottom-6 text-8xl opacity-25 pointer-events-none">👑</div>
+            </div>
+
+            <!-- Periode & Status Filters -->
+            <div class="bg-white/90 backdrop-blur rounded-3xl p-4 sm:p-5 shadow-sm border border-white flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
+                <div class="flex flex-wrap items-center gap-2">
+                    <span class="text-sm font-bold text-slate-500 mr-1"><i class="fa-solid fa-filter"></i> Periode:</span>
+                    <button onclick="app.setDayFilter('all')" class="filter-period-btn px-3 py-1.5 rounded-xl text-sm font-bold bg-slate-800 text-white" data-period="all">Alles</button>
+                    <button onclick="app.setDayFilter(1)" class="filter-period-btn px-3 py-1.5 rounded-xl text-sm font-bold bg-slate-100 text-slate-700 hover:bg-slate-200" data-period="1">P1: T/m 10</button>
+                    <button onclick="app.setDayFilter(2)" class="filter-period-btn px-3 py-1.5 rounded-xl text-sm font-bold bg-slate-100 text-slate-700 hover:bg-slate-200" data-period="2">P2: Splitsen & 20</button>
+                    <button onclick="app.setDayFilter(3)" class="filter-period-btn px-3 py-1.5 rounded-xl text-sm font-bold bg-slate-100 text-slate-700 hover:bg-slate-200" data-period="3">P3: T/m 50</button>
+                    <button onclick="app.setDayFilter(4)" class="filter-period-btn px-3 py-1.5 rounded-xl text-sm font-bold bg-slate-100 text-slate-700 hover:bg-slate-200" data-period="4">P4: Naar 100</button>
+                </div>
+                <div class="flex items-center gap-2">
+                    <label for="jump-day-select" class="text-sm font-bold text-slate-500 whitespace-nowrap">Spring naar:</label>
+                    <select id="jump-day-select" onchange="if(this.value) app.openDay(parseInt(this.value))" class="bg-slate-100 border-0 rounded-xl px-3 py-2 text-sm font-bold text-slate-700 focus:ring-2 focus:ring-pink-400">
+                        <option value="">Kies een dag...</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Grid van Dagen -->
+            <div id="days-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <!-- Wordt dynamisch gevuld via JS -->
+            </div>
+        </section>
+
+        <!-- ========================================================= -->
+        <!-- VIEW 2: ACTIEVE OEFENSESSIE (Sommen Maken)                -->
+        <!-- ========================================================= -->
+        <section id="view-oefenen" class="hidden space-y-5 animate-pop-in">
+            <!-- Bovenbalk van de les -->
+            <div class="bg-white/95 rounded-3xl p-4 shadow-sm border border-white flex flex-wrap items-center justify-between gap-3">
+                <button onclick="app.exitExercise()" class="btn-kid bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-4 py-2 rounded-xl text-sm flex items-center gap-2">
+                    <i class="fa-solid fa-arrow-left"></i> Terug
+                </button>
+
+                <div class="text-center flex-grow">
+                    <h2 id="exercise-title" class="text-lg sm:text-xl font-bold text-slate-800">Dag 1: Tellen tot 5</h2>
+                    <p id="exercise-goal" class="text-xs text-slate-500">Subiteren en getallen herkennen</p>
+                </div>
+
+                <div class="flex items-center gap-2">
+                    <button onclick="app.toggleVisualAidOverride()" id="btn-toggle-visual" class="btn-kid bg-indigo-100 text-indigo-700 font-bold px-3 py-2 rounded-xl text-xs sm:text-sm flex items-center gap-1.5" title="Zet visuele hulp aan of uit">
+                        <i class="fa-solid fa-eye"></i>
+                        <span>Hulp: AAN</span>
+                    </button>
+                    <button onclick="app.confirmResetCurrentDay()" id="btn-reset-day" class="btn-kid bg-rose-100 text-rose-700 font-bold px-3 py-2 rounded-xl text-xs sm:text-sm flex items-center gap-1.5" title="Wis alle antwoorden van deze pagina">
+                        <i class="fa-solid fa-rotate-right"></i>
+                        <span class="hidden sm:inline">Opnieuw</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Voortgangsbalk van de sommenset -->
+            <div class="bg-white/80 rounded-2xl p-3 shadow-sm">
+                <div class="flex justify-between text-xs font-bold text-slate-600 mb-1.5">
+                    <span id="progress-label">Vraag 1 van 5</span>
+                    <span id="filled-label">0 van 5 ingevuld</span>
+                </div>
+                <div class="w-full h-4 bg-slate-200 rounded-full overflow-hidden p-0.5">
+                    <div id="progress-bar-fill" class="h-full bg-gradient-to-r from-emerald-400 to-teal-500 rounded-full transition-all duration-300" style="width: 20%;"></div>
+                </div>
+                <!-- Bolletjes navigatie per som -->
+                <div id="question-dots" class="flex flex-wrap justify-center gap-2 mt-3"></div>
+            </div>
+
+            <!-- Hoofdkaart van de Som + Virtueel Toetsenbord -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+                
+                <!-- Linker / Bovenste deel: Vraag & Visuele Ondersteuning (7 kolommen op desktop) -->
+                <div class="lg:col-span-7 bg-white rounded-3xl p-5 sm:p-7 shadow-md border-2 border-white flex flex-col justify-between min-h-[340px]">
+                    <div>
+                        <div class="flex items-center justify-between gap-2 mb-4">
+                            <span id="question-type-badge" class="px-3 py-1 rounded-full text-xs font-bold bg-pink-100 text-pink-700 uppercase tracking-wide">Optellen</span>
+                            <button onclick="app.speakCurrentQuestion()" class="btn-kid bg-amber-100 hover:bg-amber-200 text-amber-800 px-3.5 py-2 rounded-xl text-sm font-bold flex items-center gap-2" title="Lees de vraag voor">
+                                <i class="fa-solid fa-volume-high"></i> Lees voor
+                            </button>
+                        </div>
+
+                        <!-- Vraagtekst -->
+                        <h3 id="question-prompt" class="text-xl sm:text-2xl font-bold text-slate-800 mb-4 leading-snug">
+                            Hoeveel is 4 + 3?
+                        </h3>
+
+                        <!-- Visuele Ondersteuning Container (Rekenrek, Kralenketting, Blokjes, Klok, Munten, Getallenlijn, Objecten) -->
+                        <div id="visual-support-box" class="bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl p-4 mb-5 flex flex-col items-center justify-center min-h-[130px]">
+                            <!-- Dynamisch gegenereerde SVG/HTML visuele hulp -->
+                        </div>
+                    </div>
+
+                    <!-- Antwoordweergave (Ondersteunt 1 of 2 invulvakken voor bv. buurman voor & na) -->
+                    <div id="answer-display-area" class="bg-slate-100/80 rounded-2xl p-4 flex flex-wrap items-center justify-center gap-3">
+                        <!-- Wordt dynamisch opgebouwd afhankelijk van vraagtype -->
+                    </div>
+                </div>
+
+                <!-- Rechter / Onderste deel: Kindvriendelijk Groot Toetsenbord (5 kolommen op desktop) -->
+                <div class="lg:col-span-5 bg-white/95 rounded-3xl p-5 shadow-md border-2 border-white">
+                    <div class="text-center mb-3">
+                        <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Tik op de cijfers</span>
+                    </div>
+                    
+                    <!-- Cijfertoetsen 1-9, 0, Wis -->
+                    <div class="grid grid-cols-3 gap-2.5 sm:gap-3">
+                        <button onclick="app.pressDigit(1)" class="btn-kid h-16 sm:h-18 rounded-2xl bg-slate-50 hover:bg-pink-50 border border-slate-200 text-2xl sm:text-3xl font-bold text-slate-800">1</button>
+                        <button onclick="app.pressDigit(2)" class="btn-kid h-16 sm:h-18 rounded-2xl bg-slate-50 hover:bg-pink-50 border border-slate-200 text-2xl sm:text-3xl font-bold text-slate-800">2</button>
+                        <button onclick="app.pressDigit(3)" class="btn-kid h-16 sm:h-18 rounded-2xl bg-slate-50 hover:bg-pink-50 border border-slate-200 text-2xl sm:text-3xl font-bold text-slate-800">3</button>
+                        <button onclick="app.pressDigit(4)" class="btn-kid h-16 sm:h-18 rounded-2xl bg-slate-50 hover:bg-pink-50 border border-slate-200 text-2xl sm:text-3xl font-bold text-slate-800">4</button>
+                        <button onclick="app.pressDigit(5)" class="btn-kid h-16 sm:h-18 rounded-2xl bg-slate-50 hover:bg-pink-50 border border-slate-200 text-2xl sm:text-3xl font-bold text-slate-800">5</button>
+                        <button onclick="app.pressDigit(6)" class="btn-kid h-16 sm:h-18 rounded-2xl bg-slate-50 hover:bg-pink-50 border border-slate-200 text-2xl sm:text-3xl font-bold text-slate-800">6</button>
+                        <button onclick="app.pressDigit(7)" class="btn-kid h-16 sm:h-18 rounded-2xl bg-slate-50 hover:bg-pink-50 border border-slate-200 text-2xl sm:text-3xl font-bold text-slate-800">7</button>
+                        <button onclick="app.pressDigit(8)" class="btn-kid h-16 sm:h-18 rounded-2xl bg-slate-50 hover:bg-pink-50 border border-slate-200 text-2xl sm:text-3xl font-bold text-slate-800">8</button>
+                        <button onclick="app.pressDigit(9)" class="btn-kid h-16 sm:h-18 rounded-2xl bg-slate-50 hover:bg-pink-50 border border-slate-200 text-2xl sm:text-3xl font-bold text-slate-800">9</button>
+                        
+                        <button onclick="app.clearActiveInput()" class="btn-kid h-16 sm:h-18 rounded-2xl bg-rose-100 hover:bg-rose-200 text-rose-700 text-lg font-bold flex items-center justify-center gap-1" title="Wis getal">
+                            <i class="fa-solid fa-delete-left text-xl"></i> Wis
+                        </button>
+                        <button onclick="app.pressDigit(0)" class="btn-kid h-16 sm:h-18 rounded-2xl bg-slate-50 hover:bg-pink-50 border border-slate-200 text-2xl sm:text-3xl font-bold text-slate-800">0</button>
+                        <button onclick="app.nextQuestion()" class="btn-kid h-16 sm:h-18 rounded-2xl bg-sky-500 hover:bg-sky-400 text-white text-lg font-bold flex items-center justify-center gap-1">
+                            Volgende <i class="fa-solid fa-arrow-right"></i>
+                        </button>
+                    </div>
+
+                    <!-- Navigatie Vorige / Check Mijn Sommen -->
+                    <div class="mt-4 pt-4 border-t border-slate-100 flex flex-col gap-2.5">
+                        <div class="flex gap-2">
+                            <button onclick="app.prevQuestion()" id="btn-prev-q" class="btn-kid flex-1 py-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-sm">
+                                <i class="fa-solid fa-chevron-left"></i> Vorige som
+                            </button>
+                            <button onclick="app.nextQuestion()" id="btn-next-q" class="btn-kid flex-1 py-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-sm">
+                                Volgende som <i class="fa-solid fa-chevron-right"></i>
+                            </button>
+                        </div>
+
+                        <!-- Grote opvallende Controleren Knop -->
+                        <button onclick="app.checkAllAnswers()" id="btn-check-all" class="btn-kid w-full py-4 rounded-2xl bg-gradient-to-r from-emerald-400 to-green-500 hover:from-emerald-500 hover:to-green-600 text-white font-bold text-lg sm:text-xl shadow-lg flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-star text-yellow-200"></i>
+                            <span>Klaar! Check mijn sommen!</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========================================================= -->
+        <!-- VIEW 3: MODULAIRE SOMMEN MAKER (Zelf een set samenstellen)-->
+        <!-- ========================================================= -->
+        <section id="view-sommenmaker" class="hidden space-y-6 animate-pop-in">
+            <div class="bg-white/95 rounded-3xl p-6 sm:p-8 shadow-md border border-white">
+                <div class="flex items-center gap-3 mb-6">
+                    <div class="w-12 h-12 rounded-2xl bg-amber-100 text-amber-600 flex items-center justify-center text-2xl">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-2xl font-bold text-slate-800">Sommen Maker</h2>
+                        <p class="text-sm text-slate-500">Stel zelf een speelse oefenset samen op maat voor groep 3</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- A. Selectie Leerjaar / Periode -->
+                    <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                        <label class="block text-sm font-bold text-slate-700 mb-2">A. Kies de Periode (Groep 3)</label>
+                        <select id="maker-period" onchange="app.syncMakerDefaults()" class="w-full rounded-xl border-slate-200 bg-white p-3 font-bold text-slate-700 shadow-sm">
+                            <option value="1">Periode 1: Start & Getallen t/m 10</option>
+                            <option value="2">Periode 2: Splitsen & Getallen t/m 20</option>
+                            <option value="3">Periode 3: Getallen t/m 50 & Tientallen</option>
+                            <option value="4">Periode 4: Naar 100 & Afronding Groep 3</option>
+                        </select>
+                    </div>
+
+                    <!-- B. Type Bewerking -->
+                    <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                        <label class="block text-sm font-bold text-slate-700 mb-2">B. Kies het Type Oefening</label>
+                        <select id="maker-type" class="w-full rounded-xl border-slate-200 bg-white p-3 font-bold text-slate-700 shadow-sm">
+                            <option value="optellen">Optellen (+)</option>
+                            <option value="aftrekken">Aftrekken (-)</option>
+                            <option value="gemengd">Optellen & Aftrekken (+ en -)</option>
+                            <option value="splitsen">Getallen Splitsen (Splitsdakje)</option>
+                            <option value="getallenlijn">Getallenlijn (Waar ligt het getal?)</option>
+                            <option value="buurman">Buurgetallen (Buurman voor en na)</option>
+                            <option value="klokkijken">Klokkijken (Hele & halve uren)</option>
+                            <option value="geld">Rekenen met Geld (Euromunten)</option>
+                        </select>
+                    </div>
+
+                    <!-- C. Getalgebied & Grenzen -->
+                    <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                        <label class="block text-sm font-bold text-slate-700 mb-2">C. Getalgebied & Grenzen</label>
+                        <select id="maker-range" class="w-full rounded-xl border-slate-200 bg-white p-3 font-bold text-slate-700 shadow-sm">
+                            <option value="10">Tot 10</option>
+                            <option value="20_no_cross">Tot 20 (zonder tientalovergang)</option>
+                            <option value="20_cross">Tot 20 (met tientalovergang, bijv. 8 + 5)</option>
+                            <option value="50">Tot 50</option>
+                            <option value="100">Tot 100 (inclusief tientallensommen)</option>
+                        </select>
+                    </div>
+
+                    <!-- D. Spelvorm & Aantal Vragen -->
+                    <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100 space-y-3">
+                        <div>
+                            <label class="block text-sm font-bold text-slate-700 mb-2">D. Aantal Sommen & Hulp</label>
+                            <div class="flex gap-2">
+                                <select id="maker-count" class="flex-1 rounded-xl border-slate-200 bg-white p-3 font-bold text-slate-700 shadow-sm">
+                                    <option value="5">5 sommen</option>
+                                    <option value="10" selected>10 sommen</option>
+                                    <option value="15">15 sommen</option>
+                                    <option value="20">20 sommen</option>
+                                </select>
+                                <select id="maker-visual" class="flex-1 rounded-xl border-slate-200 bg-white p-3 font-bold text-slate-700 shadow-sm">
+                                    <option value="auto">Visuele hulp: Automatisch</option>
+                                    <option value="rekenrek">Altijd Rekenrek</option>
+                                    <option value="kralenketting">Altijd Kralenketting</option>
+                                    <option value="tientalblokjes">Altijd Blokjes</option>
+                                    <option value="none">Geen visuele hulp</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-6 flex justify-end">
+                    <button onclick="app.startCustomSession()" class="btn-kid bg-gradient-to-r from-pink-500 to-rose-500 text-white font-bold px-8 py-4 rounded-2xl text-lg flex items-center gap-2 shadow-lg">
+                        <i class="fa-solid fa-rocket"></i> Start mijn eigen sommenset!
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========================================================= -->
+        <!-- VIEW 4: INSTELLINGEN (3 Thema's & Bulk JSON Import)       -->
+        <!-- ========================================================= -->
+        <section id="view-instellingen" class="hidden space-y-6 animate-pop-in">
+            <!-- Thema Kiezer -->
+            <div class="bg-white/95 rounded-3xl p-6 sm:p-8 shadow-md border border-white">
+                <h2 class="text-2xl font-bold text-slate-800 mb-1">Kies jouw favoriete wereld</h2>
+                <p class="text-sm text-slate-500 mb-6">Pas de kleuren en je rekenvriendje aan!</p>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <!-- Thema 1: My Melody -->
+                    <div id="card-theme-mymelody" onclick="app.setTheme('mymelody')" class="theme-card cursor-pointer rounded-3xl p-5 bg-gradient-to-b from-pink-100 to-pink-200 border-2 border-pink-300 transition-all hover:scale-[1.02]">
+                        <div class="flex justify-between items-start mb-3">
+                            <span class="text-4xl">🐰🎀</span>
+                            <span class="px-2.5 py-1 rounded-full bg-yellow-200 text-yellow-800 text-xs font-bold">Roze Prinses</span>
+                        </div>
+                        <h3 class="text-xl font-bold text-pink-900">1. My Melody Wereld</h3>
+                        <p class="text-xs text-pink-800 mt-1">Zachte pastelroze tinten met kroontjes, hartjes en toverstafjes.</p>
+                    </div>
+
+                    <!-- Thema 2: Cinnamoroll -->
+                    <div id="card-theme-cinnamoroll" onclick="app.setTheme('cinnamoroll')" class="theme-card cursor-pointer rounded-3xl p-5 bg-gradient-to-b from-sky-100 to-blue-200 border-2 border-blue-300 transition-all hover:scale-[1.02]">
+                        <div class="flex justify-between items-start mb-3">
+                            <span class="text-4xl">☁️🐶</span>
+                            <span class="px-2.5 py-1 rounded-full bg-white text-blue-700 text-xs font-bold">Blauw & Wit</span>
+                        </div>
+                        <h3 class="text-xl font-bold text-blue-900">2. Cinnamoroll Lucht</h3>
+                        <p class="text-xs text-blue-800 mt-1">Frisse wolkenstijl met blauw-witte ruitjes, bubbels en zonnegeel.</p>
+                    </div>
+
+                    <!-- Thema 3: Kuromi -->
+                    <div id="card-theme-kuromi" onclick="app.setTheme('kuromi')" class="theme-card cursor-pointer rounded-3xl p-5 bg-gradient-to-b from-purple-200 to-purple-300 border-2 border-purple-400 transition-all hover:scale-[1.02]">
+                        <div class="flex justify-between items-start mb-3">
+                            <span class="text-4xl">💜🦇</span>
+                            <span class="px-2.5 py-1 rounded-full bg-slate-800 text-pink-300 text-xs font-bold">Paars & Stoer</span>
+                        </div>
+                        <h3 class="text-xl font-bold text-purple-950">3. Kuromi Rebel</h3>
+                        <p class="text-xs text-purple-900 mt-1">Kawaii-gothic uitstraling met lavendel gradiënten, strikjes en hartjes.</p>
+                    </div>
+                </div>
+
+                <!-- Geluid & Voorlees Instellingen -->
+                <div class="mt-6 pt-6 border-t border-slate-100 flex flex-wrap items-center justify-between gap-4">
+                    <div class="flex items-center gap-4">
+                        <label class="flex items-center gap-2 cursor-pointer font-bold text-sm text-slate-700">
+                            <input type="checkbox" id="setting-sound" checked onchange="app.toggleSetting('sound', this.checked)" class="w-5 h-5 rounded text-pink-500">
+                            <span>Geluidseffecten aan</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer font-bold text-sm text-slate-700">
+                            <input type="checkbox" id="setting-speech" checked onchange="app.toggleSetting('speech', this.checked)" class="w-5 h-5 rounded text-pink-500">
+                            <span>Cijfers & vragen voorlezen</span>
+                        </label>
+                    </div>
+
+                    <button onclick="app.confirmFullReset()" class="btn-kid bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 px-4 py-2 rounded-xl text-xs font-bold">
+                        <i class="fa-solid fa-trash-can"></i> Wis alle voortgang & reset beloningen
+                    </button>
+                </div>
+            </div>
+
+            <!-- Bulk JSON Import -->
+            <div class="bg-white/95 rounded-3xl p-6 sm:p-8 shadow-md border border-white">
+                <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-800"><i class="fa-solid fa-file-import text-indigo-500"></i> Bulk JSON Import (Leerkracht / Ouder)</h2>
+                        <p class="text-xs text-slate-500">Plak hier een JSON-bestand om in één keer sommen voor meerdere dagen toe te voegen.</p>
+                    </div>
+                    <button onclick="app.loadSampleJsonIntoTextarea()" class="btn-kid bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-2 rounded-xl text-xs font-bold">
+                        Laad voorbeeld JSON
+                    </button>
+                </div>
+
+                <textarea id="json-import-input" rows="8" placeholder='Plak hier de JSON volgens de specificatie (bijv. { "leerjaar": "Groep 3", "dagen": [ ... ] })' class="w-full rounded-2xl border border-slate-200 bg-slate-50 p-4 font-mono text-xs text-slate-700 focus:ring-2 focus:ring-indigo-400 focus:outline-none"></textarea>
+
+                <div class="mt-4 flex flex-wrap items-center justify-between gap-3">
+                    <span id="json-import-status" class="text-sm font-bold text-slate-500"></span>
+                    <button onclick="app.importBulkJson()" class="btn-kid bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-6 py-3 rounded-2xl text-sm flex items-center gap-2">
+                        <i class="fa-solid fa-upload"></i> Importeer Dagen & Sommen
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========================================================= -->
+        <!-- VIEW 5: README & JSON DOCUMENTATIE                        -->
+        <!-- ========================================================= -->
+        <section id="view-readme" class="hidden space-y-6 animate-pop-in">
+            <div class="bg-white/95 rounded-3xl p-6 sm:p-8 shadow-md border border-white space-y-6">
+                <div class="border-b border-slate-100 pb-4">
+                    <span class="px-3 py-1 rounded-full bg-indigo-100 text-indigo-700 text-xs font-bold uppercase">Documentatie & Handleiding</span>
+                    <h2 class="text-2xl sm:text-3xl font-bold text-slate-800 mt-2">README: Ondersteunde Vraagtypen & JSON Specificatie</h2>
+                    <p class="text-sm text-slate-600 mt-1">Overzicht van alle didactische vraagtypen uit het Groep 3 jaarprogramma en hoe deze in JSON worden opgebouwd voor bulk-import.</p>
+                </div>
+
+                <!-- Overzicht Vraagtypen -->
+                <div class="space-y-4">
+                    <h3 class="text-lg font-bold text-slate-800">1. Alle ondersteunde vraagtypen (`type`)</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                        <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200">
+                            <h4 class="font-bold text-pink-600"><code>subiteren</code> & <code>cijferherkenning</code></h4>
+                            <p class="text-slate-600 text-xs mt-1">Hoeveelheden direct herkennen of tellen (appels, sterren, hartjes, kralen).<br><strong>Velden:</strong> <code>vraag</code>, <code>visueel_object</code>, <code>aantal</code>, <code>antwoord</code>.</p>
+                        </div>
+                        <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200">
+                            <h4 class="font-bold text-pink-600"><code>splitsen</code></h4>
+                            <p class="text-slate-600 text-xs mt-1">Getallen splitsen in een visueel splitsdakje.<br><strong>Velden:</strong> <code>vraag</code>, <code>getal</code>, <code>deel_1</code>, <code>antwoord</code>.</p>
+                        </div>
+                        <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200">
+                            <h4 class="font-bold text-pink-600"><code>optellen</code>, <code>aftrekken</code> & <code>tientallensom</code></h4>
+                            <p class="text-slate-600 text-xs mt-1">Bewerkingen tot 10, tot 20 (met/zonder tientalovergang) en tientallen tot 100.<br><strong>Velden:</strong> <code>operand_1</code>, <code>operator</code> (<code>"+"</code> of <code>"-"</code>), <code>operand_2</code>, <code>antwoord</code>, <code>visuele_ondersteuning</code>.</p>
+                        </div>
+                        <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200">
+                            <h4 class="font-bold text-pink-600"><code>getallenlijn</code></h4>
+                            <p class="text-slate-600 text-xs mt-1">Positiebepaling of sprongen op de getallenlijn (0-10, 0-20, 0-50 of 0-100).<br><strong>Velden:</strong> <code>vraag</code>, <code>min</code>, <code>max</code>, <code>markeringen</code> (array), <code>antwoord</code>.</p>
+                        </div>
+                        <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200">
+                            <h4 class="font-bold text-pink-600"><code>buurman</code> (Dubbel antwoord!)</h4>
+                            <p class="text-slate-600 text-xs mt-1">Bepaal zowel het getal ervoor als het getal erna. Opent twee invulvakken voor het kind!<br><strong>Velden:</strong> <code>vraag</code>, <code>getal</code>, <code>stap</code> (standaard 1, of 10 voor tientalburen), <code>antwoord_voor</code>, <code>antwoord_na</code>.</p>
+                        </div>
+                        <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200">
+                            <h4 class="font-bold text-pink-600"><code>klokkijken</code> & <code>geld</code></h4>
+                            <p class="text-slate-600 text-xs mt-1">Analoge klok (hele/halve uren) en euromunten (€1, €2).<br><strong>Klok velden:</strong> <code>uur</code>, <code>minuten</code> (0 of 30), <code>antwoord</code>.<br><strong>Geld velden:</strong> <code>munten</code> (array, bijv. <code>[2, 1, 1]</code>), <code>antwoord</code>.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Visuele Ondersteuning Opties -->
+                <div class="space-y-2">
+                    <h3 class="text-lg font-bold text-slate-800">2. Visuele ondersteuning (`visuele_ondersteuning`)</h3>
+                    <p class="text-sm text-slate-600">Bij elke som kan een visueel hulpmiddel worden meegegeven: <code>"rekenrek"</code> (structuur van 5 en 10), <code>"kralenketting"</code>, <code>"tientalblokjes"</code> (staven van 10 en losse blokjes), <code>"vingers"</code>, <code>"getallenlijn"</code>, <code>"klok"</code> of <code>"munten"</code>.</p>
+                </div>
+
+                <!-- JSON Voorbeeld -->
+                <div class="space-y-2">
+                    <h3 class="text-lg font-bold text-slate-800">3. Compleet JSON Voorbeeld</h3>
+                    <pre class="bg-slate-900 text-emerald-300 p-4 rounded-2xl text-xs overflow-x-auto leading-relaxed"><code>{
+  "leerjaar": "Groep 3",
+  "schooljaar": "2026-2027",
+  "dagen": [
+    {
+      "dag_id": 10,
+      "periode": 2,
+      "titel": "Dag 10: Buren & Splitsen",
+      "doelstelling": "Buurgetallen vinden en splitsen tot 10.",
+      "sommen": [
+        {
+          "id": "s10_01",
+          "type": "buurman",
+          "vraag": "Wie zijn de buren van 7? (1 minder en 1 meer)",
+          "getal": 7,
+          "stap": 1,
+          "antwoord_voor": 6,
+          "antwoord_na": 8,
+          "visuele_ondersteuning": "getallenlijn"
+        },
+        {
+          "id": "s10_02",
+          "type": "optellen",
+          "operand_1": 6,
+          "operator": "+",
+          "operand_2": 3,
+          "antwoord": 9,
+          "visuele_ondersteuning": "rekenrek"
+        }
+      ]
+    }
+  ]
+}</code></pre>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- ========================================================= -->
+    <!-- MODALS (Feestelijk Resultaat & Bevestigingsdialoog)       -->
+    <!-- ========================================================= -->
+    
+    <!-- Resultaat Modal na "Klaar! Check mijn sommen!" -->
+    <div id="result-modal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-md w-full p-6 sm:p-8 text-center shadow-2xl border-4 border-yellow-300 animate-pop-in relative overflow-hidden">
+            <div id="result-mascot" class="text-7xl mb-3 animate-bounce">🐰🎀</div>
+            <h2 id="result-title" class="text-2xl sm:text-3xl font-bold text-slate-800 mb-2">Super gedaan!</h2>
+            <p id="result-message" class="text-slate-600 text-base mb-5">Je hebt 5 van de 5 sommen goed!</p>
+
+            <!-- Verdiende beloningen badge -->
+            <div id="result-rewards-box" class="bg-amber-50 border-2 border-amber-200 rounded-2xl p-4 mb-6 flex justify-center gap-6">
+                <div class="text-center">
+                    <div class="text-3xl">⭐</div>
+                    <div id="earned-stars-text" class="font-bold text-amber-600 text-sm">+3 Sterren</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-3xl">🪙</div>
+                    <div id="earned-coins-text" class="font-bold text-yellow-600 text-sm">+5 Munten</div>
+                </div>
+            </div>
+
+            <!-- Overzicht per som (groen/oranje bolletjes) -->
+            <div id="result-breakdown" class="flex flex-wrap justify-center gap-2 mb-6"></div>
+
+            <div class="flex flex-col sm:flex-row gap-3">
+                <button onclick="app.closeResultModal(false)" class="btn-kid flex-1 py-3.5 px-4 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-base">
+                    Bekijk sommen
+                </button>
+                <button id="btn-result-next-day" onclick="app.closeResultModal(true)" class="btn-kid flex-1 py-3.5 px-4 rounded-2xl bg-gradient-to-r from-emerald-400 to-green-500 text-white font-bold text-base">
+                    Volgende Dag! <i class="fa-solid fa-arrow-right"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Bevestigings / Bericht Modal (vervangt alert/confirm) -->
+    <div id="dialog-modal" class="hidden fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-sm w-full p-6 text-center shadow-xl animate-pop-in">
+            <div id="dialog-icon" class="text-5xl mb-3">🤔</div>
+            <h3 id="dialog-title" class="text-xl font-bold text-slate-800 mb-2">Weet je het zeker?</h3>
+            <p id="dialog-text" class="text-sm text-slate-600 mb-6">Wil je deze pagina leegmaken en opnieuw beginnen?</p>
+            <div class="flex gap-3">
+                <button id="dialog-cancel" class="btn-kid flex-1 py-3 rounded-xl bg-slate-100 text-slate-700 font-bold text-sm">Annuleren</button>
+                <button id="dialog-confirm" class="btn-kid flex-1 py-3 rounded-xl bg-rose-500 text-white font-bold text-sm">Ja, doen!</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Melding -->
+    <div id="toast-box" class="fixed bottom-5 left-1/2 -translate-x-1/2 z-50 pointer-events-none opacity-0 transition-opacity duration-300">
+        <div id="toast-text" class="bg-slate-800 text-white px-5 py-3 rounded-2xl shadow-lg font-bold text-sm flex items-center gap-2">
+            ✨ Opgeslagen!
+        </div>
+    </div>
+
+    <!-- ========================================================= -->
+    <!-- APPLICATIE LOGICA (JavaScript)                            -->
+    <!-- ========================================================= -->
+    <script>
+        /**
+         * Standaard curriculum voor Groep 3 (opbouwend over de 4 periodes)
+         * Kan worden aangevuld of overschreven via Bulk JSON Import.
+         */
+        const DEFAULT_CURRICULUM = [
+            {
+                dag_id: 1,
+                periode: 1,
+                titel: "Dag 1: Tellen tot 5 & Subiteren",
+                doelstelling: "Hoeveelheden tot 5 direct herkennen en koppelen aan cijfers.",
+                sommen: [
+                    { id: "d1_1", type: "subiteren", vraag: "Hoeveel sterren zie je?", visueel_object: "⭐", aantal: 3, antwoord: 3 },
+                    { id: "d1_2", type: "cijferherkenning", vraag: "Tel de appeltjes. Welk cijfer hoort erbij?", visueel_object: "🍎", aantal: 5, antwoord: 5 },
+                    { id: "d1_3", type: "subiteren", vraag: "Hoeveel vingers zie je?", visueel_ondersteuning: "vingers", aantal: 4, antwoord: 4 },
+                    { id: "d1_4", type: "getallenlijn", vraag: "Welk getal staat bij het vraagteken op de getallenlijn?", min: 0, max: 10, target: 6, antwoord: 6, visuele_ondersteuning: "getallenlijn" },
+                    { id: "d1_5", type: "buurman", vraag: "Wie zijn de buren van 4? (1 minder en 1 meer)", getal: 4, stap: 1, antwoord_voor: 3, antwoord_na: 5, visuele_ondersteuning: "getallenlijn" }
+                ]
+            },
+            {
+                dag_id: 2,
+                periode: 1,
+                titel: "Dag 2: Optellen tot 10 met het rekenrek",
+                doelstelling: "Eerste plussommen tot 10 met visuele structuur van 5 en 10.",
+                sommen: [
+                    { id: "d2_1", type: "optellen", operand_1: 2, operator: "+", operand_2: 3, antwoord: 5, visuele_ondersteuning: "rekenrek" },
+                    { id: "d2_2", type: "optellen", operand_1: 5, operator: "+", operand_2: 2, antwoord: 7, visuele_ondersteuning: "rekenrek" },
+                    { id: "d2_3", type: "aftrekken", operand_1: 6, operator: "-", operand_2: 2, antwoord: 4, visuele_ondersteuning: "kralenketting" },
+                    { id: "d2_4", type: "splitsen", vraag: "Splits 6 in 4 en ...?", getal: 6, deel_1: 4, antwoord: 2, visuele_ondersteuning: "rekenrek" },
+                    { id: "d2_5", type: "buurman", vraag: "Wat is de buurman voor en na 8?", getal: 8, stap: 1, antwoord_voor: 7, antwoord_na: 9, visuele_ondersteuning: "getallenlijn" }
+                ]
+            },
+            {
+                dag_id: 3,
+                periode: 2,
+                titel: "Dag 3: Splitsen & Getallen tot 20",
+                doelstelling: "Handig splitsen tot 10 en sprongen naar 20.",
+                sommen: [
+                    { id: "d3_1", type: "splitsen", vraag: "Verdeel 8 in 5 en ...?", getal: 8, deel_1: 5, antwoord: 3, visuele_ondersteuning: "rekenrek" },
+                    { id: "d3_2", type: "splitsen", vraag: "Verdeel 10 in 6 en ...?", getal: 10, deel_1: 6, antwoord: 4, visuele_ondersteuning: "kralenketting" },
+                    { id: "d3_3", type: "optellen", operand_1: 12, operator: "+", operand_2: 4, antwoord: 16, visuele_ondersteuning: "rekenrek" },
+                    { id: "d3_4", type: "aftrekken", operand_1: 17, operator: "-", operand_2: 5, antwoord: 12, visuele_ondersteuning: "kralenketting" },
+                    { id: "d3_5", type: "getallenlijn", vraag: "Waar wijst de pijl naar op de getallenlijn?", min: 0, max: 20, target: 14, antwoord: 14, visuele_ondersteuning: "getallenlijn" }
+                ]
+            },
+            {
+                dag_id: 4,
+                periode: 2,
+                titel: "Dag 4: Tientalovergang & Klokkijken",
+                doelstelling: "Over de 10 rekenen en hele uren op de klok aflezen.",
+                sommen: [
+                    { id: "d4_1", type: "optellen", operand_1: 8, operator: "+", operand_2: 5, antwoord: 13, visuele_ondersteuning: "rekenrek" },
+                    { id: "d4_2", type: "aftrekken", operand_1: 14, operator: "-", operand_2: 6, antwoord: 8, visuele_ondersteuning: "rekenrek" },
+                    { id: "d4_3", type: "klokkijken", vraag: "Hoe laat is het op de klok? (Vul het hele uur in)", uur: 4, minuten: 0, antwoord: 4, visuele_ondersteuning: "klok" },
+                    { id: "d4_4", type: "geld", vraag: "Hoeveel euro ligt hier bij elkaar?", munten: [2, 2, 1], antwoord: 5, visuele_ondersteuning: "munten" },
+                    { id: "d4_5", type: "buurman", vraag: "Wie zijn de buren van 15?", getal: 15, stap: 1, antwoord_voor: 14, antwoord_na: 16, visuele_ondersteuning: "getallenlijn" }
+                ]
+            },
+            {
+                dag_id: 5,
+                periode: 3,
+                titel: "Dag 5: Getallen tot 50 & Tientallen",
+                doelstelling: "Tientallen en losse enheden herkennen met blokjes.",
+                sommen: [
+                    { id: "d5_1", type: "tientallensom", operand_1: 20, operator: "+", operand_2: 10, antwoord: 30, visuele_ondersteuning: "tientalblokjes" },
+                    { id: "d5_2", type: "optellen", operand_1: 30, operator: "+", operand_2: 4, antwoord: 34, visuele_ondersteuning: "tientalblokjes" },
+                    { id: "d5_3", type: "getallenlijn", vraag: "Welk getal ligt hier tussen 30 en 40?", min: 0, max: 50, target: 37, antwoord: 37, visuele_ondersteuning: "getallenlijn" },
+                    { id: "d5_4", type: "buurman", vraag: "Wat is 1 minder en 1 meer dan 40?", getal: 40, stap: 1, antwoord_voor: 39, antwoord_na: 41, visuele_ondersteuning: "getallenlijn" },
+                    { id: "d5_5", type: "geld", vraag: "Hoeveel euro tel je?", munten: [2, 2, 2, 1], antwoord: 7, visuele_ondersteuning: "munten" }
+                ]
+            },
+            {
+                dag_id: 6,
+                periode: 4,
+                titel: "Dag 6: Naar 100 & Grote Sprongen",
+                doelstelling: "Tientallensommen tot 100 en buren op de honderdlijn.",
+                sommen: [
+                    { id: "d6_1", type: "tientallensom", operand_1: 40, operator: "+", operand_2: 30, antwoord: 70, visuele_ondersteuning: "tientalblokjes" },
+                    { id: "d6_2", type: "tientallensom", operand_1: 80, operator: "-", operand_2: 20, antwoord: 60, visuele_ondersteuning: "tientalblokjes" },
+                    { id: "d6_3", type: "buurman", vraag: "Wie zijn de buren van 72?", getal: 72, stap: 1, antwoord_voor: 71, antwoord_na: 73, visuele_ondersteuning: "getallenlijn" },
+                    { id: "d6_4", type: "getallenlijn", vraag: "Welk tiental staat bij het vraagteken?", min: 0, max: 100, target: 60, antwoord: 60, visuele_ondersteuning: "getallenlijn" },
+                    { id: "d6_5", type: "klokkijken", vraag: "Hoe laat is het op de klok?", uur: 9, minuten: 0, antwoord: 9, visuele_ondersteuning: "klok" }
+                ]
+            }
+        ];
+
+        class RekenPaleisApp {
+            constructor() {
+                this.STORAGE_KEY = 'rekenpaleis_groep3_v2';
+                
+                // Standaard state waarbij beloningen netjes op 0 beginnen
+                this.state = {
+                    theme: 'mymelody',
+                    stars: 0,
+                    coins: 0,
+                    soundEnabled: true,
+                    speechEnabled: true,
+                    curriculum: JSON.parse(JSON.stringify(DEFAULT_CURRICULUM)),
+                    progress: {} // { [dag_id]: { completed: bool, score: num, total: num, starsEarned: num, answers: {} } }
+                };
+
+                // Huidige sessie state
+                this.currentSession = {
+                    mode: 'day', // 'day' of 'custom'
+                    dagId: null,
+                    title: '',
+                    goal: '',
+                    questions: [],
+                    currentIndex: 0,
+                    userAnswers: {}, // { [qIndex]: { val1: string, val2: string } }
+                    activeSlot: 1,   // 1 voor normaal of eerste buurman, 2 voor tweede buurman
+                    visualOverride: true,
+                    checked: false
+                };
+
+                this.dayFilterPeriod = 'all';
+                this.audioCtx = null;
+
+                this.loadState();
+                this.initUI();
+            }
+
+            // =========================================================
+            // OPSLAG & INITIALISATIE
+            // =========================================================
+            loadState() {
+                try {
+                    const saved = localStorage.getItem(this.STORAGE_KEY);
+                    if (saved) {
+                        const parsed = JSON.parse(saved);
+                        this.state = {
+                            ...this.state,
+                            ...parsed,
+                            // Zorg dat 0-waarden behouden blijven
+                            stars: typeof parsed.stars === 'number' ? parsed.stars : 0,
+                            coins: typeof parsed.coins === 'number' ? parsed.coins : 0
+                        };
+                    }
+                } catch (e) {
+                    console.warn("Kon opgeslagen voortgang niet laden:", e);
+                }
+            }
+
+            saveState() {
+                try {
+                    localStorage.setItem(this.STORAGE_KEY, JSON.stringify(this.state));
+                    this.updateStatsDisplay();
+                } catch (e) {
+                    console.warn("Kon voortgang niet opslaan:", e);
+                }
+            }
+
+            initUI() {
+                this.applyTheme(this.state.theme);
+                this.updateStatsDisplay();
+                
+                const soundCb = document.getElementById('setting-sound');
+                const speechCb = document.getElementById('setting-speech');
+                if (soundCb) soundCb.checked = this.state.soundEnabled;
+                if (speechCb) speechCb.checked = this.state.speechEnabled;
+
+                this.renderDaysGrid();
+            }
+
+            // =========================================================
+            // THEMA BEHEER (Met null-checks voor veilige DOM updates)
+            // =========================================================
+            setTheme(themeName) {
+                this.state.theme = themeName;
+                this.applyTheme(themeName);
+                this.saveState();
+                this.playTone(523.25, 'sine', 0.12);
+                this.showToast(`Thema gewijzigd!`);
+            }
+
+            applyTheme(themeName) {
+                const body = document.getElementById('app-body');
+                const banner = document.getElementById('welcome-banner');
+                const badge = document.getElementById('theme-badge');
+                const mascot = document.getElementById('mascot-avatar');
+                const bannerIcon = document.getElementById('banner-bg-icon');
+                const navActive = document.getElementById('nav-dagprogramma');
+
+                if (body) {
+                    body.classList.remove('theme-mymelody', 'theme-cinnamoroll', 'theme-kuromi');
+                    body.classList.add(`theme-${themeName}`);
+                }
+
+                if (themeName === 'mymelody') {
+                    if (banner) banner.className = "relative overflow-hidden rounded-3xl p-6 sm:p-8 text-white shadow-lg bg-gradient-to-r from-pink-400 to-rose-400";
+                    if (badge) {
+                        badge.textContent = "My Melody";
+                        badge.className = "text-xs px-2.5 py-0.5 rounded-full bg-pink-100 text-pink-700 font-semibold shadow-sm";
+                    }
+                    if (mascot) {
+                        mascot.textContent = "🐰🎀";
+                        mascot.className = "w-12 h-12 rounded-2xl bg-pink-100 flex items-center justify-center text-2xl shadow-inner border-2 border-white animate-bounce-gentle";
+                    }
+                    if (bannerIcon) bannerIcon.textContent = "👑";
+                } else if (themeName === 'cinnamoroll') {
+                    if (banner) banner.className = "relative overflow-hidden rounded-3xl p-6 sm:p-8 text-white shadow-lg bg-gradient-to-r from-sky-400 to-blue-500";
+                    if (badge) {
+                        badge.textContent = "Cinnamoroll";
+                        badge.className = "text-xs px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-700 font-semibold shadow-sm";
+                    }
+                    if (mascot) {
+                        mascot.textContent = "☁️🐶";
+                        mascot.className = "w-12 h-12 rounded-2xl bg-blue-100 flex items-center justify-center text-2xl shadow-inner border-2 border-white animate-bounce-gentle";
+                    }
+                    if (bannerIcon) bannerIcon.textContent = "☁️";
+                } else if (themeName === 'kuromi') {
+                    if (banner) banner.className = "relative overflow-hidden rounded-3xl p-6 sm:p-8 text-white shadow-lg bg-gradient-to-r from-purple-600 to-indigo-700";
+                    if (badge) {
+                        badge.textContent = "Kuromi Rebel";
+                        badge.className = "text-xs px-2.5 py-0.5 rounded-full bg-purple-100 text-purple-800 font-semibold shadow-sm";
+                    }
+                    if (mascot) {
+                        mascot.textContent = "💜🦇";
+                        mascot.className = "w-12 h-12 rounded-2xl bg-purple-100 flex items-center justify-center text-2xl shadow-inner border-2 border-white animate-bounce-gentle";
+                    }
+                    if (bannerIcon) bannerIcon.textContent = "✨";
+                }
+
+                // Markeer geselecteerde themakaart
+                document.querySelectorAll('.theme-card').forEach(card => {
+                    card.classList.remove('ring-4', 'ring-amber-400', 'scale-[1.02]');
+                });
+                const activeCard = document.getElementById(`card-theme-${themeName}`);
+                if (activeCard) {
+                    activeCard.classList.add('ring-4', 'ring-amber-400', 'scale-[1.02]');
+                }
+            }
+
+            getMascotEmoji() {
+                if (this.state.theme === 'cinnamoroll') return '☁️🐶';
+                if (this.state.theme === 'kuromi') return '💜🦇';
+                return '🐰🎀';
+            }
+
+            updateStatsDisplay() {
+                const starsEl = document.getElementById('stat-stars');
+                const coinsEl = document.getElementById('stat-coins');
+                const daysEl = document.getElementById('stat-days');
+
+                const completedDaysCount = Object.values(this.state.progress).filter(p => p && p.completed).length;
+
+                if (starsEl) starsEl.textContent = this.state.stars;
+                if (coinsEl) coinsEl.textContent = this.state.coins;
+                if (daysEl) daysEl.textContent = completedDaysCount;
+            }
+
+            // =========================================================
+            // NAVIGATIE TUSSEN SCHERMEN
+            // =========================================================
+            switchView(viewName) {
+                const views = ['dagprogramma', 'oefenen', 'sommenmaker', 'instellingen', 'readme'];
+                views.forEach(v => {
+                    const el = document.getElementById(`view-${v}`);
+                    if (el) el.classList.add('hidden');
+                });
+
+                const target = document.getElementById(`view-${viewName}`);
+                if (target) target.classList.remove('hidden');
+
+                // Update actieve stijl in bovenste navigatiebalk
+                document.querySelectorAll('.nav-btn').forEach(btn => {
+                    btn.classList.remove('bg-pink-500', 'text-white');
+                    btn.classList.add('bg-white', 'text-slate-700');
+                });
+                const activeNav = document.getElementById(`nav-${viewName}`);
+                if (activeNav) {
+                    activeNav.classList.remove('bg-white', 'text-slate-700');
+                    activeNav.classList.add('bg-pink-500', 'text-white');
+                }
+
+                if (viewName === 'dagprogramma') {
+                    this.renderDaysGrid();
+                }
+            }
+
+            // =========================================================
+            // DAGPROGRAMMA OVERZICHT & FILTERS
+            // =========================================================
+            setDayFilter(period) {
+                this.dayFilterPeriod = period;
+                document.querySelectorAll('.filter-period-btn').forEach(btn => {
+                    if (String(btn.dataset.period) === String(period)) {
+                        btn.className = "filter-period-btn px-3 py-1.5 rounded-xl text-sm font-bold bg-slate-800 text-white";
+                    } else {
+                        btn.className = "filter-period-btn px-3 py-1.5 rounded-xl text-sm font-bold bg-slate-100 text-slate-700 hover:bg-slate-200";
+                    }
+                });
+                this.renderDaysGrid();
+            }
+
+            renderDaysGrid() {
+                const grid = document.getElementById('days-grid');
+                const jumpSelect = document.getElementById('jump-day-select');
+                const continueBtnLabel = document.getElementById('btn-continue-label');
+                if (!grid) return;
+
+                // Sorteer dagen oplopend op dag_id
+                const sortedDays = [...this.state.curriculum].sort((a, b) => a.dag_id - b.dag_id);
+
+                // Vul dropdown om snel te springen
+                if (jumpSelect) {
+                    jumpSelect.innerHTML = '<option value="">Kies een dag...</option>' + 
+                        sortedDays.map(d => `<option value="${d.dag_id}">Dag ${d.dag_id} (Periode ${d.periode})</option>`).join('');
+                }
+
+                // Zoek eerstvolgende onvoltooide dag voor de startknop
+                const nextDay = sortedDays.find(d => !this.state.progress[d.dag_id]?.completed) || sortedDays[0];
+                if (continueBtnLabel && nextDay) {
+                    continueBtnLabel.textContent = `Start Dag ${nextDay.dag_id}`;
+                }
+
+                // Filter op geselecteerde periode
+                const filtered = this.dayFilterPeriod === 'all' 
+                    ? sortedDays 
+                    : sortedDays.filter(d => Number(d.periode) === Number(this.dayFilterPeriod));
+
+                grid.innerHTML = filtered.map(day => {
+                    const prog = this.state.progress[day.dag_id];
+                    const isCompleted = prog && prog.completed;
+                    const isNext = nextDay && day.dag_id === nextDay.dag_id;
+
+                    const periodColors = {
+                        1: 'bg-emerald-100 text-emerald-700',
+                        2: 'bg-sky-100 text-sky-700',
+                        3: 'bg-amber-100 text-amber-700',
+                        4: 'bg-purple-100 text-purple-700'
+                    };
+
+                    return `
+                        <div class="bg-white/95 rounded-3xl p-5 shadow-sm border-2 ${isNext ? 'border-yellow-400 ring-2 ring-yellow-200' : 'border-white'} flex flex-col justify-between transition-transform hover:-translate-y-1">
+                            <div>
+                                <div class="flex items-center justify-between gap-2 mb-3">
+                                    <span class="px-2.5 py-1 rounded-xl text-xs font-bold ${periodColors[day.periode] || 'bg-slate-100 text-slate-700'}">
+                                        Periode ${day.periode}
+                                    </span>
+                                    ${isCompleted 
+                                        ? `<span class="flex items-center gap-1 text-xs font-bold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-xl"><i class="fa-solid fa-circle-check"></i> Klaar (${prog.score}/${prog.total})</span>` 
+                                        : (isNext ? `<span class="text-xs font-bold text-amber-600 bg-amber-50 px-2.5 py-1 rounded-xl">✨ Aan de beurt</span>` : `<span class="text-xs font-bold text-slate-400">${day.sommen.length} sommen</span>`)
+                                    }
+                                </div>
+                                <h3 class="text-lg font-bold text-slate-800 mb-1">${day.titel}</h3>
+                                <p class="text-xs text-slate-500 mb-4 line-clamp-2">${day.doelstelling || ''}</p>
+                            </div>
+
+                            <div class="flex items-center gap-2 pt-2 border-t border-slate-100">
+                                <button onclick="app.openDay(${day.dag_id})" class="btn-kid flex-1 py-2.5 px-4 rounded-xl font-bold text-sm ${isCompleted ? 'bg-emerald-500 text-white' : 'bg-pink-500 text-white'} flex items-center justify-center gap-1.5">
+                                    <i class="fa-solid ${isCompleted ? 'fa-eye' : 'fa-play'}"></i>
+                                    <span>${isCompleted ? 'Openen / Oefenen' : 'Starten'}</span>
+                                </button>
+                                ${prog ? `
+                                    <button onclick="app.resetDayById(${day.dag_id})" class="btn-kid p-2.5 rounded-xl bg-slate-100 hover:bg-rose-100 text-slate-500 hover:text-rose-600" title="Reset deze dag">
+                                        <i class="fa-solid fa-rotate-right"></i>
+                                    </button>
+                                ` : ''}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            startNextAvailableDay() {
+                const sortedDays = [...this.state.curriculum].sort((a, b) => a.dag_id - b.dag_id);
+                const nextDay = sortedDays.find(d => !this.state.progress[d.dag_id]?.completed) || sortedDays[0];
+                if (nextDay) {
+                    this.openDay(nextDay.dag_id);
+                }
+            }
+
+            // =========================================================
+            // DAG OF EIGEN SOMMENSET STARTEN
+            // =========================================================
+            openDay(dagId) {
+                const dayObj = this.state.curriculum.find(d => Number(d.dag_id) === Number(dagId));
+                if (!dayObj) return;
+
+                const savedAnswers = this.state.progress[dagId]?.answers || {};
+
+                this.currentSession = {
+                    mode: 'day',
+                    dagId: dayObj.dag_id,
+                    title: dayObj.titel,
+                    goal: dayObj.doelstelling || '',
+                    questions: dayObj.sommen,
+                    currentIndex: 0,
+                    userAnswers: JSON.parse(JSON.stringify(savedAnswers)),
+                    activeSlot: 1,
+                    visualOverride: true,
+                    checked: false
+                };
+
+                this.startExerciseView();
+            }
+
+            startCustomSession() {
+                const period = parseInt(document.getElementById('maker-period').value);
+                const type = document.getElementById('maker-type').value;
+                const range = document.getElementById('maker-range').value;
+                const count = parseInt(document.getElementById('maker-count').value);
+                const visualChoice = document.getElementById('maker-visual').value;
+
+                const questions = this.generateCustomQuestions({ period, type, range, count, visualChoice });
+
+                this.currentSession = {
+                    mode: 'custom',
+                    dagId: null,
+                    title: `Eigen Sommenset (${count} sommen)`,
+                    goal: `Periode ${period} • Oefening op maat`,
+                    questions,
+                    currentIndex: 0,
+                    userAnswers: {},
+                    activeSlot: 1,
+                    visualOverride: visualChoice !== 'none',
+                    checked: false
+                };
+
+                this.startExerciseView();
+            }
+
+            syncMakerDefaults() {
+                const period = parseInt(document.getElementById('maker-period').value);
+                const rangeSelect = document.getElementById('maker-range');
+                if (period === 1) rangeSelect.value = '10';
+                else if (period === 2) rangeSelect.value = '20_cross';
+                else if (period === 3) rangeSelect.value = '50';
+                else if (period === 4) rangeSelect.value = '100';
+            }
+
+            generateCustomQuestions({ period, type, range, count, visualChoice }) {
+                const questions = [];
+                const maxNum = range === '10' ? 10 : (range.startsWith('20') ? 20 : (range === '50' ? 50 : 100));
+
+                for (let i = 0; i < count; i++) {
+                    let qType = type;
+                    if (type === 'gemengd') {
+                        qType = Math.random() > 0.5 ? 'optellen' : 'aftrekken';
+                    }
+
+                    const resolveVisual = (defaultVis) => {
+                        if (visualChoice === 'none') return 'none';
+                        if (visualChoice === 'auto') return defaultVis;
+                        return visualChoice;
+                    };
+
+                    if (qType === 'optellen') {
+                        let a, b;
+                        if (range === '10') {
+                            a = Math.floor(Math.random() * 6) + 1;
+                            b = Math.floor(Math.random() * (10 - a)) + 1;
+                        } else if (range === '20_no_cross') {
+                            a = Math.floor(Math.random() * 9) + 10; // 10..18
+                            b = Math.floor(Math.random() * (20 - a)) + 1;
+                        } else if (range === '20_cross') {
+                            a = Math.floor(Math.random() * 4) + 6; // 6..9
+                            b = Math.floor(Math.random() * 5) + (11 - a); // zorgt dat a+b > 10
+                        } else if (range === '50' || range === '100') {
+                            // Tientallensommen of tiental + losse
+                            if (Math.random() > 0.5) {
+                                a = (Math.floor(Math.random() * (maxNum / 10 - 1)) + 1) * 10;
+                                b = (Math.floor(Math.random() * ((maxNum - a) / 10)) + 1) * 10;
+                            } else {
+                                a = (Math.floor(Math.random() * (maxNum / 10 - 1)) + 1) * 10;
+                                b = Math.floor(Math.random() * 9) + 1;
+                            }
+                        }
+                        questions.push({
+                            id: `c_${i}`,
+                            type: 'optellen',
+                            operand_1: a,
+                            operator: '+',
+                            operand_2: b,
+                            antwoord: a + b,
+                            visuele_ondersteuning: resolveVisual(maxNum <= 20 ? 'rekenrek' : 'tientalblokjes')
+                        });
+                    } else if (qType === 'aftrekken') {
+                        let a, b;
+                        if (range === '10') {
+                            a = Math.floor(Math.random() * 8) + 3;
+                            b = Math.floor(Math.random() * (a - 1)) + 1;
+                        } else if (range === '20_no_cross') {
+                            a = Math.floor(Math.random() * 8) + 12;
+                            b = Math.floor(Math.random() * (a - 10)) + 1;
+                        } else if (range === '20_cross') {
+                            a = Math.floor(Math.random() * 5) + 11; // 11..15
+                            b = (a - 10) + Math.floor(Math.random() * 4) + 1; // gaat onder de 10
+                        } else {
+                            a = (Math.floor(Math.random() * (maxNum / 10 - 2)) + 3) * 10;
+                            b = (Math.floor(Math.random() * (a / 10 - 1)) + 1) * 10;
+                        }
+                        questions.push({
+                            id: `c_${i}`,
+                            type: 'aftrekken',
+                            operand_1: a,
+                            operator: '-',
+                            operand_2: b,
+                            antwoord: a - b,
+                            visuele_ondersteuning: resolveVisual(maxNum <= 20 ? 'kralenketting' : 'tientalblokjes')
+                        });
+                    } else if (qType === 'splitsen') {
+                        const totaal = Math.floor(Math.random() * 6) + 5; // 5..10
+                        const deel1 = Math.floor(Math.random() * (totaal - 1)) + 1;
+                        questions.push({
+                            id: `c_${i}`,
+                            type: 'splitsen',
+                            vraag: `Splits ${totaal} in ${deel1} en ...?`,
+                            getal: totaal,
+                            deel_1: deel1,
+                            antwoord: totaal - deel1,
+                            visuele_ondersteuning: resolveVisual('rekenrek')
+                        });
+                    } else if (qType === 'getallenlijn') {
+                        const target = Math.floor(Math.random() * (maxNum - 2)) + 1;
+                        questions.push({
+                            id: `c_${i}`,
+                            type: 'getallenlijn',
+                            vraag: `Welk getal staat bij het vraagteken op de getallenlijn?`,
+                            min: 0,
+                            max: maxNum,
+                            target: target,
+                            antwoord: target,
+                            visuele_ondersteuning: resolveVisual('getallenlijn')
+                        });
+                    } else if (qType === 'buurman') {
+                        const getal = Math.floor(Math.random() * (maxNum - 2)) + 1;
+                        questions.push({
+                            id: `c_${i}`,
+                            type: 'buurman',
+                            vraag: `Wie zijn de buren van ${getal}? (1 minder en 1 meer)`,
+                            getal: getal,
+                            stap: 1,
+                            antwoord_voor: getal - 1,
+                            antwoord_na: getal + 1,
+                            visuele_ondersteuning: resolveVisual('getallenlijn')
+                        });
+                    } else if (qType === 'klokkijken') {
+                        const uur = Math.floor(Math.random() * 12) + 1;
+                        questions.push({
+                            id: `c_${i}`,
+                            type: 'klokkijken',
+                            vraag: `Hoe laat is het op de klok? (Vul het uur in)`,
+                            uur: uur,
+                            minuten: 0,
+                            antwoord: uur,
+                            visuele_ondersteuning: resolveVisual('klok')
+                        });
+                    } else if (qType === 'geld') {
+                        const m1 = Math.random() > 0.5 ? 2 : 1;
+                        const m2 = Math.random() > 0.5 ? 2 : 1;
+                        const m3 = Math.floor(Math.random() * 3); // 0, 1 of 2
+                        const munten = m3 > 0 ? [m1, m2, m3] : [m1, m2];
+                        const sum = munten.reduce((acc, v) => acc + v, 0);
+                        questions.push({
+                            id: `c_${i}`,
+                            type: 'geld',
+                            vraag: `Hoeveel euro ligt hier bij elkaar?`,
+                            munten: munten,
+                            antwoord: sum,
+                            visuele_ondersteuning: resolveVisual('munten')
+                        });
+                    }
+                }
+                return questions;
+            }
+
+            startExerciseView() {
+                this.switchView('oefenen');
+                document.getElementById('exercise-title').textContent = this.currentSession.title;
+                document.getElementById('exercise-goal').textContent = this.currentSession.goal;
+                
+                const resetBtn = document.getElementById('btn-reset-day');
+                if (resetBtn) {
+                    resetBtn.classList.toggle('hidden', this.currentSession.mode !== 'day');
+                }
+
+                this.updateVisualToggleButton();
+                this.renderQuestion();
+            }
+
+            exitExercise() {
+                this.switchView('dagprogramma');
+            }
+
+            toggleVisualAidOverride() {
+                this.currentSession.visualOverride = !this.currentSession.visualOverride;
+                this.updateVisualToggleButton();
+                this.renderQuestion();
+            }
+
+            updateVisualToggleButton() {
+                const btn = document.getElementById('btn-toggle-visual');
+                if (!btn) return;
+                if (this.currentSession.visualOverride) {
+                    btn.className = "btn-kid bg-indigo-100 text-indigo-700 font-bold px-3 py-2 rounded-xl text-xs sm:text-sm flex items-center gap-1.5";
+                    btn.innerHTML = `<i class="fa-solid fa-eye"></i><span>Hulp: AAN</span>`;
+                } else {
+                    btn.className = "btn-kid bg-slate-100 text-slate-500 font-bold px-3 py-2 rounded-xl text-xs sm:text-sm flex items-center gap-1.5";
+                    btn.innerHTML = `<i class="fa-solid fa-eye-slash"></i><span>Hulp: UIT</span>`;
+                }
+            }
+
+            // =========================================================
+            // VRAAG RENDERING & VISUELE ONDERSTEUNING (Rekenrek, etc.)
+            // =========================================================
+            renderQuestion() {
+                const q = this.currentSession.questions[this.currentSession.currentIndex];
+                if (!q) return;
+
+                const total = this.currentSession.questions.length;
+                const idx = this.currentSession.currentIndex;
+
+                // Update voortgangsbalk en labels
+                document.getElementById('progress-label').textContent = `Vraag ${idx + 1} van ${total}`;
+                const filledCount = this.countFilledQuestions();
+                document.getElementById('filled-label').textContent = `${filledCount} van ${total} ingevuld`;
+                document.getElementById('progress-bar-fill').style.width = `${((idx + 1) / total) * 100}%`;
+
+                // Render bolletjes navigatie
+                this.renderQuestionDots();
+
+                // Type badge
+                const typeNames = {
+                    subiteren: 'Tellen & Herkennen',
+                    cijferherkenning: 'Cijferherkenning',
+                    splitsen: 'Getallen Splitsen',
+                    optellen: 'Optellen (+)',
+                    aftrekken: 'Aftrekken (-)',
+                    tientallensom: 'Tientallen Som',
+                    getallenlijn: 'Getallenlijn',
+                    buurman: 'Buurgetallen (Voor & Na)',
+                    klokkijken: 'Klokkijken',
+                    geld: 'Rekenen met Geld'
+                };
+                document.getElementById('question-type-badge').textContent = typeNames[q.type] || q.type;
+
+                // Vraagtekst
+                const promptText = this.getQuestionPromptText(q);
+                document.getElementById('question-prompt').textContent = promptText;
+
+                // Visuele ondersteuning tekenen
+                this.renderVisualSupport(q);
+
+                // Antwoordvak(ken) tekenen (1 vak of 2 vakken bij buurman)
+                this.renderAnswerArea(q);
+
+                // Vorige/Volgende knoppen status
+                document.getElementById('btn-prev-q').disabled = idx === 0;
+                document.getElementById('btn-prev-q').classList.toggle('opacity-40', idx === 0);
+            }
+
+            getQuestionPromptText(q) {
+                if (q.vraag) return q.vraag;
+                if (q.type === 'optellen' || q.type === 'aftrekken' || q.type === 'tientallensom') {
+                    return `Reken uit: ${q.operand_1} ${q.operator} ${q.operand_2} = ?`;
+                }
+                if (q.type === 'splitsen') {
+                    return `Splits het getal ${q.getal} in ${q.deel_1} en ...?`;
+                }
+                if (q.type === 'buurman') {
+                    return `Wie zijn de buren van ${q.getal}?`;
+                }
+                return 'Los de som op!';
+            }
+
+            renderQuestionDots() {
+                const container = document.getElementById('question-dots');
+                if (!container) return;
+
+                container.innerHTML = this.currentSession.questions.map((q, i) => {
+                    const ans = this.currentSession.userAnswers[i];
+                    const isFilled = this.isQuestionAnswered(q, ans);
+                    const isCurrent = i === this.currentSession.currentIndex;
+
+                    let bg = 'bg-slate-200 text-slate-600';
+                    if (this.currentSession.checked) {
+                        const isCorrect = this.evaluateSingleQuestion(q, ans);
+                        bg = isCorrect ? 'bg-emerald-500 text-white' : 'bg-rose-500 text-white';
+                    } else if (isFilled) {
+                        bg = 'bg-sky-400 text-white';
+                    }
+
+                    return `
+                        <button onclick="app.goToQuestion(${i})" class="w-8 h-8 rounded-full font-bold text-xs transition-all ${bg} ${isCurrent ? 'ring-4 ring-pink-300 scale-110' : ''}">
+                            ${i + 1}
+                        </button>
+                    `;
+                }).join('');
+            }
+
+            /**
+             * Tekent uitgebreide, interactieve of heldere visuele ondersteuning
+             */
+            renderVisualSupport(q) {
+                const box = document.getElementById('visual-support-box');
+                if (!box) return;
+
+                const aid = q.visuele_ondersteuning || this.inferDefaultVisualAid(q);
+
+                if (!this.currentSession.visualOverride || aid === 'none') {
+                    box.classList.add('hidden');
+                    return;
+                }
+                box.classList.remove('hidden');
+
+                // 1. Subiteren / Cijferherkenning met emoji objecten
+                if (q.type === 'subiteren' || q.type === 'cijferherkenning') {
+                    if (aid === 'vingers') {
+                        box.innerHTML = this.buildFingersSVG(q.aantal || 3);
+                        return;
+                    }
+                    const icon = q.visueel_object || '⭐';
+                    const count = q.aantal || 3;
+                    let itemsHtml = '';
+                    for (let i = 0; i < count; i++) {
+                        itemsHtml += `<span class="text-4xl sm:text-5xl animate-pop-in" style="animation-delay: ${i * 50}ms">${icon}</span>`;
+                    }
+                    box.innerHTML = `<div class="flex flex-wrap justify-center gap-3 p-2">${itemsHtml}</div>`;
+                    return;
+                }
+
+                // 2. Splitsdakje bij splitsen + optioneel rekenrek
+                if (q.type === 'splitsen') {
+                    const splitDiagram = `
+                        <div class="flex flex-col items-center mb-3">
+                            <div class="w-16 h-12 rounded-2xl bg-pink-500 text-white font-bold text-2xl flex items-center justify-center shadow">${q.getal}</div>
+                            <div class="flex gap-8 -mt-1">
+                                <div class="w-1 h-6 bg-slate-400 -rotate-12"></div>
+                                <div class="w-1 h-6 bg-slate-400 rotate-12"></div>
+                            </div>
+                            <div class="flex gap-6">
+                                <div class="w-14 h-12 rounded-2xl bg-sky-100 border-2 border-sky-400 text-sky-900 font-bold text-xl flex items-center justify-center">${q.deel_1}</div>
+                                <div class="w-14 h-12 rounded-2xl bg-amber-100 border-2 border-dashed border-amber-400 text-amber-700 font-bold text-xl flex items-center justify-center">?</div>
+                            </div>
+                        </div>
+                    `;
+                    const extraAid = aid === 'kralenketting' ? this.buildKralenkettingHTML(q.getal, q.deel_1) : this.buildRekenrekHTML(q.getal, q.deel_1);
+                    box.innerHTML = splitDiagram + extraAid;
+                    return;
+                }
+
+                // 3. Rekenrek (Structuur van 5 rood en 5 wit per stang, 2 stangen = 20)
+                if (aid === 'rekenrek') {
+                    const n1 = q.operand_1 || 0;
+                    const n2 = q.operator === '+' ? (q.operand_2 || 0) : 0;
+                    box.innerHTML = this.buildRekenrekHTML(n1, n2, q.operator === '-' ? q.operand_2 : 0);
+                    return;
+                }
+
+                // 4. Kralenketting (Groepjes van 5 rood en 5 wit tot 20)
+                if (aid === 'kralenketting') {
+                    const totalBeads = q.operand_1 || q.aantal || 10;
+                    const subtractBeads = q.operator === '-' ? (q.operand_2 || 0) : 0;
+                    box.innerHTML = this.buildKralenkettingHTML(totalBeads, subtractBeads);
+                    return;
+                }
+
+                // 5. Tientalblokjes (Staven van 10 en losse eenheden)
+                if (aid === 'tientalblokjes') {
+                    const val1 = q.operand_1 || 20;
+                    const val2 = q.operand_2 || 0;
+                    box.innerHTML = this.buildTientalBlokjesHTML(val1, val2, q.operator || '+');
+                    return;
+                }
+
+                // 6. Getallenlijn (0-10, 0-20, 0-50 of 0-100)
+                if (aid === 'getallenlijn' || q.type === 'getallenlijn' || q.type === 'buurman') {
+                    box.innerHTML = this.buildGetallenlijnSVG(q);
+                    return;
+                }
+
+                // 7. Analoge Klok
+                if (aid === 'klok' || q.type === 'klokkijken') {
+                    box.innerHTML = this.buildClockSVG(q.uur || 3, q.minuten || 0);
+                    return;
+                }
+
+                // 8. Euromunten
+                if (aid === 'munten' || q.type === 'geld') {
+                    const coins = q.munten || [2, 1];
+                    box.innerHTML = `
+                        <div class="flex flex-wrap justify-center gap-3 py-2">
+                            ${coins.map(c => `
+                                <div class="w-16 h-16 rounded-full flex items-center justify-center font-bold text-xl shadow-md border-4 ${c === 2 ? 'bg-amber-200 border-yellow-500 text-amber-900' : 'bg-yellow-300 border-amber-500 text-amber-950'}">
+                                    €${c}
+                                </div>
+                            `).join('')}
+                        </div>
+                    `;
+                    return;
+                }
+
+                // 9. Vingers
+                if (aid === 'vingers') {
+                    box.innerHTML = this.buildFingersSVG(q.aantal || q.operand_1 || 5);
+                    return;
+                }
+            }
+
+            inferDefaultVisualAid(q) {
+                if (q.type === 'getallenlijn' || q.type === 'buurman') return 'getallenlijn';
+                if (q.type === 'klokkijken') return 'klok';
+                if (q.type === 'geld') return 'munten';
+                if (q.type === 'tientallensom') return 'tientalblokjes';
+                if (q.type === 'optellen' || q.type === 'aftrekken') {
+                    return (q.operand_1 > 20 || q.operand_2 > 20) ? 'tientalblokjes' : 'rekenrek';
+                }
+                return 'rekenrek';
+            }
+
+            buildRekenrekHTML(topCount, bottomCount = 0, crossedOut = 0) {
+                const renderRow = (activeCount, crossCount = 0) => {
+                    let beads = '';
+                    for (let i = 0; i < 10; i++) {
+                        const isRed = i < 5;
+                        const isActive = i < activeCount;
+                        const isCrossed = isActive && i >= (activeCount - crossCount);
+                        const colorClass = isRed ? 'bg-rose-500 border-rose-700' : 'bg-white border-slate-400';
+                        beads += `
+                            <div class="w-6 h-7 sm:w-7 sm:h-8 rounded-full border-2 ${colorClass} shadow-sm flex items-center justify-center relative ${isActive ? 'mr-0.5' : 'opacity-25 ml-1'}">
+                                ${isCrossed ? '<span class="text-slate-900 font-black text-lg leading-none">✕</span>' : ''}
+                            </div>
+                        `;
+                    }
+                    return `
+                        <div class="relative flex items-center py-1.5 px-2">
+                            <div class="absolute inset-x-0 h-1.5 bg-amber-800/40 rounded-full z-0"></div>
+                            <div class="relative z-10 flex items-center">${beads}</div>
+                        </div>
+                    `;
+                };
+
+                // Als topCount > 10 (bijv 14), verdeel netjes over bovenste (10) en onderste (4) stang
+                let row1 = Math.min(10, topCount);
+                let row2 = topCount > 10 ? Math.min(10, topCount - 10) : Math.min(10, bottomCount);
+
+                return `
+                    <div class="bg-amber-100/90 border-4 border-amber-700 rounded-2xl p-2 shadow-inner">
+                        ${renderRow(row1, topCount <= 10 ? crossedOut : 0)}
+                        ${renderRow(row2, topCount > 10 ? crossedOut : 0)}
+                    </div>
+                    <span class="text-[11px] font-bold text-slate-400 mt-1.5">Rekenrek (5 rode & 5 witte kralen per rij)</span>
+                `;
+            }
+
+            buildKralenkettingHTML(activeCount, crossedCount = 0) {
+                const total = Math.min(20, Math.max(10, activeCount));
+                let beads = '';
+                for (let i = 0; i < total; i++) {
+                    const isRed = Math.floor(i / 5) % 2 === 0;
+                    const isActive = i < activeCount;
+                    const isCrossed = isActive && i >= (activeCount - crossedCount);
+                    beads += `
+                        <div class="w-5 h-5 sm:w-6 sm:h-6 rounded-full border-2 ${isRed ? 'bg-rose-500 border-rose-700' : 'bg-white border-slate-400'} flex items-center justify-center text-xs font-bold ${isActive ? '' : 'opacity-25'}">
+                            ${isCrossed ? '✕' : ''}
+                        </div>
+                    `;
+                }
+                return `
+                    <div class="flex flex-wrap items-center justify-center gap-1 py-2 px-3 bg-white rounded-2xl border border-slate-200 shadow-sm">
+                        ${beads}
+                    </div>
+                    <span class="text-[11px] font-bold text-slate-400 mt-1">Kralenketting (per 5 gegroepeerd)</span>
+                `;
+            }
+
+            buildTientalBlokjesHTML(val1, val2, operator) {
+                const renderNumberBlocks = (num, label) => {
+                    const tens = Math.floor(num / 10);
+                    const ones = num % 10;
+                    let tensHtml = '';
+                    for (let t = 0; t < tens; t++) {
+                        tensHtml += `<div class="w-4 h-16 bg-amber-400 border border-amber-600 rounded-sm flex flex-col justify-between p-0.5 shadow-sm" title="1 tiental (10)">
+                            <div class="w-full h-px bg-amber-600/40"></div>
+                            <div class="w-full h-px bg-amber-600/40"></div>
+                            <div class="w-full h-px bg-amber-600/40"></div>
+                        </div>`;
+                    }
+                    let onesHtml = '';
+                    for (let o = 0; o < ones; o++) {
+                        onesHtml += `<div class="w-4 h-4 bg-sky-400 border border-sky-600 rounded-sm shadow-sm" title="1 losse eenheid"></div>`;
+                    }
+                    return `
+                        <div class="flex flex-col items-center bg-white p-2.5 rounded-xl border border-slate-200">
+                            <div class="flex items-end gap-1.5 min-h-[68px]">
+                                <div class="flex gap-1">${tensHtml}</div>
+                                <div class="grid grid-cols-2 gap-1">${onesHtml}</div>
+                            </div>
+                            <span class="text-xs font-bold text-slate-600 mt-1.5">${num} (${tens}T + ${ones}E)</span>
+                        </div>
+                    `;
+                };
+
+                return `
+                    <div class="flex flex-wrap items-center justify-center gap-3">
+                        ${renderNumberBlocks(val1)}
+                        ${val2 > 0 ? `<span class="text-2xl font-bold text-slate-500">${operator}</span>${renderNumberBlocks(val2)}` : ''}
+                    </div>
+                `;
+            }
+
+            buildGetallenlijnSVG(q) {
+                let min = q.min !== undefined ? q.min : 0;
+                let max = q.max !== undefined ? q.max : 10;
+
+                if (q.type === 'buurman') {
+                    const g = q.getal || 5;
+                    if (g <= 10) { min = 0; max = 10; }
+                    else if (g <= 20) { min = 0; max = 20; }
+                    else if (g <= 50) { min = 0; max = 50; }
+                    else { min = 0; max = 100; }
+                }
+
+                const step = max <= 10 ? 1 : (max <= 20 ? 2 : 10);
+                let ticksHtml = '';
+                for (let v = min; v <= max; v += step) {
+                    const pct = ((v - min) / (max - min)) * 100;
+                    ticksHtml += `
+                        <div class="absolute flex flex-col items-center -translate-x-1/2" style="left: ${pct}%">
+                            <div class="w-0.5 h-3 bg-slate-600"></div>
+                            <span class="text-[11px] font-bold text-slate-700 mt-0.5">${v}</span>
+                        </div>
+                    `;
+                }
+
+                let markerHtml = '';
+                if (q.type === 'getallenlijn' && q.target !== undefined) {
+                    const targetPct = ((q.target - min) / (max - min)) * 100;
+                    markerHtml = `
+                        <div class="absolute -top-7 -translate-x-1/2 flex flex-col items-center animate-bounce" style="left: ${targetPct}%">
+                            <span class="px-2 py-0.5 rounded-lg bg-pink-500 text-white font-bold text-xs shadow">?</span>
+                            <div class="w-0.5 h-2 bg-pink-500"></div>
+                        </div>
+                    `;
+                } else if (q.type === 'buurman' && q.getal !== undefined) {
+                    const gPct = ((q.getal - min) / (max - min)) * 100;
+                    markerHtml = `
+                        <div class="absolute -top-7 -translate-x-1/2 flex flex-col items-center" style="left: ${gPct}%">
+                            <span class="px-2 py-0.5 rounded-lg bg-amber-400 text-slate-900 font-bold text-xs shadow">${q.getal}</span>
+                            <div class="w-0.5 h-2 bg-amber-500"></div>
+                        </div>
+                    `;
+                }
+
+                return `
+                    <div class="w-full px-4 pt-8 pb-6">
+                        <div class="relative w-full h-1 bg-slate-600 rounded-full">
+                            ${ticksHtml}
+                            ${markerHtml}
+                        </div>
+                    </div>
+                `;
+            }
+
+            buildClockSVG(hour, minutes = 0) {
+                const hourAngle = ((hour % 12) + minutes / 60) * 30;
+                const minuteAngle = minutes * 6;
+                return `
+                    <svg viewBox="0 0 120 120" class="w-32 h-32 drop-shadow">
+                        <circle cx="60" cy="60" r="54" fill="#ffffff" stroke="#3b82f6" stroke-width="5"/>
+                        <text x="60" y="20" text-anchor="middle" font-size="11" font-weight="bold" fill="#1e293b">12</text>
+                        <text x="102" y="64" text-anchor="middle" font-size="11" font-weight="bold" fill="#1e293b">3</text>
+                        <text x="60" y="108" text-anchor="middle" font-size="11" font-weight="bold" fill="#1e293b">6</text>
+                        <text x="18" y="64" text-anchor="middle" font-size="11" font-weight="bold" fill="#1e293b">9</text>
+                        <!-- Grote wijzer (minuten) -->
+                        <line x1="60" y1="60" x2="60" y2="20" stroke="#64748b" stroke-width="3" stroke-linecap="round" transform="rotate(${minuteAngle} 60 60)"/>
+                        <!-- Kleine wijzer (uren) -->
+                        <line x1="60" y1="60" x2="60" y2="33" stroke="#ef4444" stroke-width="4.5" stroke-linecap="round" transform="rotate(${hourAngle} 60 60)"/>
+                        <circle cx="60" cy="60" r="4" fill="#1e293b"/>
+                    </svg>
+                    <span class="text-xs font-bold text-slate-500 mt-1">Kijk naar de rode kleine wijzer</span>
+                `;
+            }
+
+            buildFingersSVG(count) {
+                const c = Math.min(10, Math.max(1, count));
+                let fingers = '';
+                for (let i = 0; i < c; i++) {
+                    const gap = i === 5 ? 'ml-4' : '';
+                    fingers += `<div class="w-4 h-12 rounded-t-full bg-amber-200 border-2 border-amber-400 ${gap}"></div>`;
+                }
+                return `<div class="flex items-end justify-center gap-1.5 py-2">${fingers}</div>`;
+            }
+
+            // =========================================================
+            // ANTWOORDVAKKEN (Inclusief Dubbel Vak voor Buurgetallen!)
+            // =========================================================
+            renderAnswerArea(q) {
+                const area = document.getElementById('answer-display-area');
+                if (!area) return;
+
+                const idx = this.currentSession.currentIndex;
+                const saved = this.currentSession.userAnswers[idx] || { val1: '', val2: '' };
+
+                if (q.type === 'buurman') {
+                    // Twee invulvakken: Buurman ervoor [ ? ] - [ Getal ] - [ ? ] Buurman erna
+                    const slot1Active = this.currentSession.activeSlot === 1;
+                    const slot2Active = this.currentSession.activeSlot === 2;
+
+                    area.innerHTML = `
+                        <div class="flex flex-col items-center">
+                            <span class="text-[11px] font-bold text-slate-500 mb-1">Buurman voor</span>
+                            <button onclick="app.selectInputSlot(1)" class="w-20 h-16 rounded-2xl text-2xl sm:text-3xl font-bold flex items-center justify-center transition-all ${slot1Active ? 'bg-white ring-4 ring-pink-400 text-pink-600 shadow-md' : 'bg-white/80 border-2 border-slate-300 text-slate-700'}">
+                                ${saved.val1 !== '' ? saved.val1 : '?'}
+                            </button>
+                        </div>
+
+                        <div class="flex flex-col items-center">
+                            <span class="text-[11px] font-bold text-amber-600 mb-1">Getal</span>
+                            <div class="w-20 h-16 rounded-2xl bg-amber-300 text-slate-900 text-2xl sm:text-3xl font-bold flex items-center justify-center shadow-inner">
+                                ${q.getal}
+                            </div>
+                        </div>
+
+                        <div class="flex flex-col items-center">
+                            <span class="text-[11px] font-bold text-slate-500 mb-1">Buurman na</span>
+                            <button onclick="app.selectInputSlot(2)" class="w-20 h-16 rounded-2xl text-2xl sm:text-3xl font-bold flex items-center justify-center transition-all ${slot2Active ? 'bg-white ring-4 ring-pink-400 text-pink-600 shadow-md' : 'bg-white/80 border-2 border-slate-300 text-slate-700'}">
+                                ${saved.val2 !== '' ? saved.val2 : '?'}
+                            </button>
+                        </div>
+                    `;
+                } else {
+                    // Enkel invulvak met context
+                    this.currentSession.activeSlot = 1;
+                    let prefix = 'Jouw antwoord:';
+                    let suffix = '';
+
+                    if (q.type === 'optellen' || q.type === 'aftrekken' || q.type === 'tientallensom') {
+                        prefix = `${q.operand_1} ${q.operator} ${q.operand_2} =`;
+                    } else if (q.type === 'geld') {
+                        prefix = 'Totaal: €';
+                    } else if (q.type === 'klokkijken') {
+                        prefix = 'Het is';
+                        suffix = 'uur';
+                    }
+
+                    area.innerHTML = `
+                        <span class="text-xl sm:text-2xl font-bold text-slate-700">${prefix}</span>
+                        <div class="min-w-[96px] h-16 px-4 rounded-2xl bg-white ring-4 ring-pink-400 text-pink-600 text-3xl font-bold flex items-center justify-center shadow-md">
+                            ${saved.val1 !== '' ? saved.val1 : '?'}
+                        </div>
+                        ${suffix ? `<span class="text-xl sm:text-2xl font-bold text-slate-700">${suffix}</span>` : ''}
+                    `;
+                }
+            }
+
+            selectInputSlot(slotNumber) {
+                this.currentSession.activeSlot = slotNumber;
+                this.playTone(440, 'sine', 0.08);
+                this.renderAnswerArea(this.currentSession.questions[this.currentSession.currentIndex]);
+            }
+
+            // =========================================================
+            // VIRTUEEL TOETSENBORD INTERACTIE
+            // =========================================================
+            pressDigit(digit) {
+                const idx = this.currentSession.currentIndex;
+                const q = this.currentSession.questions[idx];
+                if (!q) return;
+
+                if (!this.currentSession.userAnswers[idx]) {
+                    this.currentSession.userAnswers[idx] = { val1: '', val2: '' };
+                }
+
+                const slotKey = this.currentSession.activeSlot === 2 ? 'val2' : 'val1';
+                let currentStr = String(this.currentSession.userAnswers[idx][slotKey] || '');
+
+                // Maximaal 3 cijfers (tot 100)
+                if (currentStr.length >= 3) {
+                    currentStr = '';
+                }
+                const newVal = currentStr === '0' ? String(digit) : currentStr + String(digit);
+                this.currentSession.userAnswers[idx][slotKey] = newVal;
+
+                this.playTone(350 + digit * 30, 'triangle', 0.1);
+                this.speakText(newVal);
+
+                // Bij buurman-vraag: spring automatisch naar vak 2 als vak 1 logischerwijs compleet is
+                if (q.type === 'buurman' && slotKey === 'val1') {
+                    const expectedLen = String(q.antwoord_voor).length;
+                    if (newVal.length >= expectedLen) {
+                        this.currentSession.activeSlot = 2;
+                    }
+                }
+
+                this.persistSessionAnswersIfDay();
+                this.renderQuestion();
+            }
+
+            clearActiveInput() {
+                const idx = this.currentSession.currentIndex;
+                const q = this.currentSession.questions[idx];
+                if (!q) return;
+
+                if (!this.currentSession.userAnswers[idx]) {
+                    this.currentSession.userAnswers[idx] = { val1: '', val2: '' };
+                }
+
+                const slotKey = this.currentSession.activeSlot === 2 ? 'val2' : 'val1';
+                this.currentSession.userAnswers[idx][slotKey] = '';
+                this.playTone(220, 'sine', 0.1);
+
+                this.persistSessionAnswersIfDay();
+                this.renderQuestion();
+            }
+
+            persistSessionAnswersIfDay() {
+                if (this.currentSession.mode === 'day' && this.currentSession.dagId !== null) {
+                    const dId = this.currentSession.dagId;
+                    if (!this.state.progress[dId]) {
+                        this.state.progress[dId] = { completed: false, score: 0, total: this.currentSession.questions.length, answers: {} };
+                    }
+                    this.state.progress[dId].answers = JSON.parse(JSON.stringify(this.currentSession.userAnswers));
+                    this.saveState();
+                }
+            }
+
+            goToQuestion(index) {
+                if (index >= 0 && index < this.currentSession.questions.length) {
+                    this.currentSession.currentIndex = index;
+                    this.currentSession.activeSlot = 1;
+                    this.renderQuestion();
+                }
+            }
+
+            nextQuestion() {
+                if (this.currentSession.currentIndex < this.currentSession.questions.length - 1) {
+                    this.goToQuestion(this.currentSession.currentIndex + 1);
+                } else {
+                    this.showToast("Je bent bij de laatste som! Druk op 'Check mijn sommen!'");
+                }
+            }
+
+            prevQuestion() {
+                if (this.currentSession.currentIndex > 0) {
+                    this.goToQuestion(this.currentSession.currentIndex - 1);
+                }
+            }
+
+            // =========================================================
+            // ANTWOORDEN CONTROLEREN & FEESTELIJKE ANIMATIES
+            // =========================================================
+            isQuestionAnswered(q, ans) {
+                if (!ans) return false;
+                if (q.type === 'buurman') {
+                    return ans.val1 !== '' && ans.val2 !== '';
+                }
+                return ans.val1 !== '';
+            }
+
+            countFilledQuestions() {
+                return this.currentSession.questions.filter((q, i) => 
+                    this.isQuestionAnswered(q, this.currentSession.userAnswers[i])
+                ).length;
+            }
+
+            evaluateSingleQuestion(q, ans) {
+                if (!ans) return false;
+                if (q.type === 'buurman') {
+                    return Number(ans.val1) === Number(q.antwoord_voor) && Number(ans.val2) === Number(q.antwoord_na);
+                }
+                return Number(ans.val1) === Number(q.antwoord);
+            }
+
+            checkAllAnswers() {
+                const questions = this.currentSession.questions;
+                const total = questions.length;
+                let correctCount = 0;
+
+                const breakdownHtml = questions.map((q, i) => {
+                    const ans = this.currentSession.userAnswers[i];
+                    const ok = this.evaluateSingleQuestion(q, ans);
+                    if (ok) correctCount++;
+                    return `
+                        <div class="w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm text-white shadow ${ok ? 'bg-emerald-500' : 'bg-rose-400'}">
+                            ${i + 1} ${ok ? '✓' : '✗'}
+                        </div>
+                    `;
+                }).join('');
+
+                this.currentSession.checked = true;
+                this.renderQuestionDots();
+
+                // Bereken sterren en munten
+                const ratio = correctCount / total;
+                const earnedStars = ratio === 1 ? 3 : (ratio >= 0.6 ? 2 : (correctCount > 0 ? 1 : 0));
+                const earnedCoins = correctCount * 2;
+
+                // Voeg beloningen toe aan totaal
+                this.state.stars += earnedStars;
+                this.state.coins += earnedCoins;
+
+                // Sla dagvoortgang op
+                if (this.currentSession.mode === 'day' && this.currentSession.dagId !== null) {
+                    const dId = this.currentSession.dagId;
+                    this.state.progress[dId] = {
+                        completed: ratio >= 0.6, // Minimaal 60% goed om dag af te ronden
+                        score: correctCount,
+                        total: total,
+                        starsEarned: earnedStars,
+                        answers: JSON.parse(JSON.stringify(this.currentSession.userAnswers))
+                    };
+                }
+                this.saveState();
+
+                // Vul Resultaat Modal
+                document.getElementById('result-mascot').textContent = this.getMascotEmoji();
+                document.getElementById('result-title').textContent = ratio === 1 ? 'Wauw! Alles goed!' : (ratio >= 0.6 ? 'Super goed gedaan!' : 'Goed geprobeerd!');
+                document.getElementById('result-message').textContent = `Je hebt ${correctCount} van de ${total} sommen goed gemaakt!`;
+                document.getElementById('earned-stars-text').textContent = `+${earnedStars} Sterren`;
+                document.getElementById('earned-coins-text').textContent = `+${earnedCoins} Munten`;
+                document.getElementById('result-breakdown').innerHTML = breakdownHtml;
+
+                const nextDayBtn = document.getElementById('btn-result-next-day');
+                if (nextDayBtn) {
+                    nextDayBtn.textContent = this.currentSession.mode === 'day' ? 'Volgende Dag! →' : 'Terug naar Overzicht';
+                }
+
+                document.getElementById('result-modal').classList.remove('hidden');
+
+                // Vier feest met confetti en geluid!
+                if (ratio >= 0.6) {
+                    this.playSuccessFanfare();
+                    this.speakText(`Geweldig! Je hebt ${correctCount} van de ${total} sommen goed!`);
+                    if (typeof confetti === 'function') {
+                        confetti({ particleCount: 90, spread: 70, origin: { y: 0.6 } });
+                    }
+                } else {
+                    this.playTone(300, 'sine', 0.25);
+                    this.speakText(`Goed geprobeerd! Je hebt er ${correctCount} goed. Kijk nog eens rustig naar de sommen.`);
+                }
+            }
+
+            closeResultModal(goNextDay) {
+                document.getElementById('result-modal').classList.add('hidden');
+                if (goNextDay) {
+                    if (this.currentSession.mode === 'day' && this.currentSession.dagId !== null) {
+                        const sorted = [...this.state.curriculum].sort((a, b) => a.dag_id - b.dag_id);
+                        const idx = sorted.findIndex(d => Number(d.dag_id) === Number(this.currentSession.dagId));
+                        if (idx >= 0 && idx + 1 < sorted.length) {
+                            this.openDay(sorted[idx + 1].dag_id);
+                            return;
+                        }
+                    }
+                    this.switchView('dagprogramma');
+                }
+            }
+
+            // =========================================================
+            // RESET FUNCTIONALITEIT
+            // =========================================================
+            confirmResetCurrentDay() {
+                if (this.currentSession.mode !== 'day' || this.currentSession.dagId === null) return;
+                this.showConfirmDialog(
+                    "Pagina opnieuw beginnen?",
+                    "Alle antwoorden op deze dag worden gewist zodat je opnieuw kunt oefenen.",
+                    () => {
+                        this.resetDayById(this.currentSession.dagId);
+                        this.openDay(this.currentSession.dagId);
+                        this.showToast("Pagina is gereset!");
+                    }
+                );
+            }
+
+            resetDayById(dagId) {
+                delete this.state.progress[dagId];
+                this.saveState();
+                this.renderDaysGrid();
+            }
+
+            confirmFullReset() {
+                this.showConfirmDialog(
+                    "Alles helemaal wissen?",
+                    "Al je sterren, munten en afgeronde dagen worden teruggezet naar 0.",
+                    () => {
+                        this.state.stars = 0;
+                        this.state.coins = 0;
+                        this.state.progress = {};
+                        this.saveState();
+                        this.renderDaysGrid();
+                        this.showToast("Voortgang en beloningen zijn gereset naar 0!");
+                    }
+                );
+            }
+
+            // =========================================================
+            // BULK JSON IMPORT
+            // =========================================================
+            loadSampleJsonIntoTextarea() {
+                const sample = {
+                    leerjaar: "Groep 3",
+                    schooljaar: "2026-2027",
+                    dagen: [
+                        {
+                            dag_id: 7,
+                            periode: 2,
+                            titel: "Dag 7: Extra oefendag Splitsen & Buren",
+                            doelstelling: "Geïmporteerde les met buren en splitsen tot 10.",
+                            sommen: [
+                                {
+                                    id: "imp_1",
+                                    type: "buurman",
+                                    vraag: "Wie zijn de buren van 9?",
+                                    getal: 9,
+                                    stap: 1,
+                                    antwoord_voor: 8,
+                                    antwoord_na: 10,
+                                    visuele_ondersteuning: "getallenlijn"
+                                },
+                                {
+                                    id: "imp_2",
+                                    type: "splitsen",
+                                    vraag: "Verdeel 7 in 3 en ...?",
+                                    getal: 7,
+                                    deel_1: 3,
+                                    antwoord: 4,
+                                    visuele_ondersteuning: "rekenrek"
+                                }
+                            ]
+                        }
+                    ]
+                };
+                document.getElementById('json-import-input').value = JSON.stringify(sample, null, 2);
+            }
+
+            importBulkJson() {
+                const raw = document.getElementById('json-import-input').value.trim();
+                const statusEl = document.getElementById('json-import-status');
+                if (!raw) {
+                    statusEl.textContent = "⚠️ Plak eerst geldige JSON in het tekstvak.";
+                    statusEl.className = "text-sm font-bold text-rose-600";
+                    return;
+                }
+
+                try {
+                    const parsed = JSON.parse(raw);
+                    if (!parsed.dagen || !Array.isArray(parsed.dagen)) {
+                        throw new Error("Het JSON-object moet een 'dagen' lijst (array) bevatten.");
+                    }
+
+                    let addedOrUpdated = 0;
+                    parsed.dagen.forEach(newDay => {
+                        if (!newDay.dag_id || !Array.isArray(newDay.sommen)) return;
+                        const existingIdx = this.state.curriculum.findIndex(d => Number(d.dag_id) === Number(newDay.dag_id));
+                        const formattedDay = {
+                            dag_id: Number(newDay.dag_id),
+                            periode: Number(newDay.periode) || 1,
+                            titel: newDay.titel || `Dag ${newDay.dag_id}`,
+                            doelstelling: newDay.doelstelling || '',
+                            sommen: newDay.sommen
+                        };
+
+                        if (existingIdx >= 0) {
+                            this.state.curriculum[existingIdx] = formattedDay;
+                        } else {
+                            this.state.curriculum.push(formattedDay);
+                        }
+                        addedOrUpdated++;
+                    });
+
+                    this.saveState();
+                    this.renderDaysGrid();
+
+                    statusEl.textContent = `✅ Succes! ${addedOrUpdated} dag(en) ingelezen en toegevoegd.`;
+                    statusEl.className = "text-sm font-bold text-emerald-600";
+                    this.showToast(`${addedOrUpdated} dagen geïmporteerd!`);
+                } catch (err) {
+                    statusEl.textContent = `❌ Fout in JSON: ${err.message}`;
+                    statusEl.className = "text-sm font-bold text-rose-600";
+                }
+            }
+
+            // =========================================================
+            // AUDIO & SPRAAK SYNTHESE (Web Audio API & SpeechSynthesis)
+            // =========================================================
+            toggleSetting(key, val) {
+                if (key === 'sound') this.state.soundEnabled = val;
+                if (key === 'speech') this.state.speechEnabled = val;
+                this.saveState();
+            }
+
+            playTone(freq, type = 'sine', duration = 0.12) {
+                if (!this.state.soundEnabled) return;
+                try {
+                    if (!this.audioCtx) {
+                        this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                    }
+                    const osc = this.audioCtx.createOscillator();
+                    const gain = this.audioCtx.createGain();
+                    osc.type = type;
+                    osc.frequency.setValueAtTime(freq, this.audioCtx.currentTime);
+                    gain.gain.setValueAtTime(0.15, this.audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, this.audioCtx.currentTime + duration);
+                    osc.connect(gain);
+                    gain.connect(this.audioCtx.destination);
+                    osc.start();
+                    osc.stop(this.audioCtx.currentTime + duration);
+                } catch (e) {}
+            }
+
+            playSuccessFanfare() {
+                if (!this.state.soundEnabled) return;
+                const notes = [523.25, 659.25, 783.99, 1046.50];
+                notes.forEach((n, i) => {
+                    setTimeout(() => this.playTone(n, 'triangle', 0.2), i * 110);
+                });
+            }
+
+            speakText(text) {
+                if (!this.state.speechEnabled || !('speechSynthesis' in window)) return;
+                try {
+                    window.speechSynthesis.cancel();
+                    const utter = new SpeechSynthesisUtterance(String(text));
+                    utter.lang = 'nl-NL';
+                    utter.rate = 0.95;
+                    utter.pitch = 1.1;
+                    window.speechSynthesis.speak(utter);
+                } catch (e) {}
+            }
+
+            speakCurrentQuestion() {
+                const q = this.currentSession.questions[this.currentSession.currentIndex];
+                if (!q) return;
+                // Maak wiskundige tekens natuurlijk uitspreekbaar
+                let text = this.getQuestionPromptText(q)
+                    .replace(/\+/g, ' erbij ')
+                    .replace(/\-/g, ' eraf ')
+                    .replace(/=/g, ' is ')
+                    .replace(/\?/g, '');
+                
+                // Forceer voorlezen als het kind expliciet op de knop drukt
+                if ('speechSynthesis' in window) {
+                    window.speechSynthesis.cancel();
+                    const utter = new SpeechSynthesisUtterance(text);
+                    utter.lang = 'nl-NL';
+                    utter.rate = 0.9;
+                    window.speechSynthesis.speak(utter);
+                }
+            }
+
+            // =========================================================
+            // UI HELPERS (Toast & Bevestigingsdialoog)
+            // =========================================================
+            showToast(msg) {
+                const box = document.getElementById('toast-box');
+                const txt = document.getElementById('toast-text');
+                if (!box || !txt) return;
+                txt.textContent = msg;
+                box.classList.remove('opacity-0');
+                setTimeout(() => box.classList.add('opacity-0'), 2600);
+            }
+
+            showConfirmDialog(title, text, onConfirm) {
+                const modal = document.getElementById('dialog-modal');
+                document.getElementById('dialog-title').textContent = title;
+                document.getElementById('dialog-text').textContent = text;
+                modal.classList.remove('hidden');
+
+                const cancelBtn = document.getElementById('dialog-cancel');
+                const confirmBtn = document.getElementById('dialog-confirm');
+
+                const cleanup = () => modal.classList.add('hidden');
+                cancelBtn.onclick = cleanup;
+                confirmBtn.onclick = () => {
+                    cleanup();
+                    onConfirm();
+                };
+            }
+        }
+
+        // Initialiseer de applicatie zodra de pagina geladen is
+        let app;
+        window.addEventListener('DOMContentLoaded', () => {
+            app = new RekenPaleisApp();
+        });
+    </script>
+</body>
+</html>
